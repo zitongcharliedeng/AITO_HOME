@@ -35,8 +35,8 @@ AITO_HOME/
     ├── flake.nix
     └── flake_modules/
         ├── USE_HARDWARE_CONFIG_FOR_MACHINE_/
-        │   ├── HYPER_V/
-        │   ├── GPD_POCKET_4/
+        │   ├── HYPER_V.nix          # auto-generated
+        │   ├── GPD_POCKET_4.nix     # auto-generated
         │   └── ...
         └── USE_SOFTWARE_CONFIG/
 ```
@@ -67,10 +67,10 @@ machine.succeed("pgrep -x ghostty")
 6. Run:
    ```
    nix-shell -p git
-   git clone <this repo>
+   git clone https://github.com/zitongcharliedeng/AITO_HOME.git
    cd AITO_HOME/nixos_system_config
-   ./BUILD_NIXOS_FROM_FLAKE_FOR_MACHINE_.sh <YOUR_MACHINE>
+   ./BUILD_NIXOS_FROM_FLAKE_FOR_MACHINE_.sh MY_NEW_MACHINE
    ```
 7. Reboot - you now have AITO
 
-The installer just gets you a bootable partition. The flake rebuilds everything.
+The script auto-generates `MY_NEW_MACHINE.nix` with your hardware config. Machine names must be SCREAMING_SNAKE_CASE.

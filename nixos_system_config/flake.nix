@@ -9,12 +9,15 @@
     let
       system = "x86_64-linux";
       machinesDir = ./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_;
-      machineNames = builtins.attrNames (builtins.readDir machinesDir);
+
+      allFiles = builtins.readDir machinesDir;
+      nixFiles = builtins.filter (name: builtins.match ".*\\.nix$" name != null) (builtins.attrNames allFiles);
+      machineNames = map (name: builtins.replaceStrings [".nix"] [""] name) nixFiles;
 
       mkSystem = machine: nixpkgs.lib.nixosSystem {
         inherit system;
         modules = [
-          (machinesDir + "/${machine}")
+          (machinesDir + "/${machine}.nix")
           ./flake_modules/USE_SOFTWARE_CONFIG
         ];
       };
