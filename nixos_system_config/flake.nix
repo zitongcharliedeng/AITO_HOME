@@ -8,10 +8,11 @@
   outputs = { self, nixpkgs, ... }:
     let
       system = "x86_64-linux";
+      lib = nixpkgs.lib;
       machinesDir = ./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_;
 
       machineFiles = builtins.readDir machinesDir;
-      machineNames = builtins.filter (name: builtins.hasSuffix ".nix" name) (builtins.attrNames machineFiles);
+      machineNames = builtins.filter (name: lib.hasSuffix ".nix" name) (builtins.attrNames machineFiles);
 
       mkSystem = file: nixpkgs.lib.nixosSystem {
         inherit system;
