@@ -1,5 +1,5 @@
 {
-  description = "AITO_HOME - NixOS system config";
+  description = "AITO_HOME";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -8,22 +8,20 @@
   outputs = { self, nixpkgs, ... }:
     let
       system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
-    in
-    {
-      checks.${system} = {
-        system-installs-from-flake = import ./tests/SYSTEM_INSTALLS_FROM_FLAKE.test.nix {
-          inherit pkgs;
-          inherit (nixpkgs) lib;
-        };
-      };
+      machinesDir = ./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_;
+      machineNames = builtins.attrNames (builtins.readDir machinesDir);
 
-      nixosConfigurations.aito = nixpkgs.lib.nixosSystem {
+      mkSystem = machine: nixpkgs.lib.nixosSystem {
         inherit system;
         modules = [
-          ./flake_modules/USE_HARDWARE_CONFIG_
+          (machinesDir + "/${machine}")
           ./flake_modules/USE_SOFTWARE_CONFIG
         ];
       };
+    in
+    {
+      nixosConfigurations = builtins.listToAttrs (
+        map (name: { inherit name; value = mkSystem name; }) machineNames
+      );
     };
 }

@@ -24,7 +24,7 @@ AITO_HOME/
 ├── AGENTS.md
 │
 └── nixos_system_config/
-    ├── BUILD_NIXOS_FROM_FLAKE.sh
+    ├── BUILD_NIXOS_FROM_FLAKE_FOR_MACHINE_.sh
     │
     ├── CREATE_NEW_FEATURE/
     │   ├── 1_DEFINE_USER_JOURNEY.sh
@@ -32,9 +32,13 @@ AITO_HOME/
     │   ├── 3_WATCH_TEST_RUN.sh
     │   └── 4_LGTM_AND_COMMIT.sh
     │
-    ├── flake.nix                       # lowercase = implementation
-    ├── flake_modules/
-    └── tests/
+    ├── flake.nix
+    └── flake_modules/
+        ├── USE_HARDWARE_CONFIG_FOR_MACHINE_/
+        │   ├── HYPER_V/
+        │   ├── GPD_POCKET_4/
+        │   └── ...
+        └── USE_SOFTWARE_CONFIG/
 ```
 
 ## Test Helper Convention
@@ -49,6 +53,24 @@ terminal.cannotBeClosed()
 machine.succeed("pgrep -x ghostty")
 ```
 
-## First Milestone
+## First Time Setup
 
-Boot minimal ISO → `BUILD_NIXOS_FROM_FLAKE.sh` → system boots with user `username`.
+1. Download the NixOS graphical installer ISO
+2. Boot from the ISO
+3. Click through the installer - none of the settings matter:
+   - Region, language, keyboard: pick anything
+   - Username and password: pick anything
+   - Desktop: select "No desktop"
+   - Partitioning: use the defaults
+4. Finish install, reboot, login
+5. Connect to internet
+6. Run:
+   ```
+   nix-shell -p git
+   git clone <this repo>
+   cd AITO_HOME/nixos_system_config
+   ./BUILD_NIXOS_FROM_FLAKE_FOR_MACHINE_.sh <YOUR_MACHINE>
+   ```
+7. Reboot - you now have AITO
+
+The installer just gets you a bootable partition. The flake rebuilds everything.
