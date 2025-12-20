@@ -10,21 +10,23 @@
       system = "x86_64-linux";
       machinesDir = ./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_;
 
-      allFiles = builtins.readDir machinesDir;
-      nixFiles = builtins.filter (name: builtins.match ".*\\.nix$" name != null) (builtins.attrNames allFiles);
-      machineNames = map (name: builtins.replaceStrings [".nix"] [""] name) nixFiles;
+      machineFiles = builtins.readDir machinesDir;
+      machineNames = builtins.filter (name: builtins.hasSuffix ".nix" name) (builtins.attrNames machineFiles);
 
-      mkSystem = machine: nixpkgs.lib.nixosSystem {
+      mkSystem = file: nixpkgs.lib.nixosSystem {
         inherit system;
         modules = [
-          (machinesDir + "/${machine}.nix")
+          (machinesDir + "/${file}")
           ./flake_modules/USE_SOFTWARE_CONFIG
         ];
       };
     in
     {
       nixosConfigurations = builtins.listToAttrs (
-        map (name: { inherit name; value = mkSystem name; }) machineNames
+        map (file: {
+          name = builtins.replaceStrings [".nix"] [""] file;
+          value = mkSystem file;
+        }) machineNames
       );
     };
 }
