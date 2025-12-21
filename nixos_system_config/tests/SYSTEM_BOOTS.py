@@ -1,3 +1,9 @@
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from nixos_test_driver import Machine, subtest
+    machine: Machine
+
 machine.wait_for_unit("multi-user.target")
 
 with subtest("hostname is AITO"):
