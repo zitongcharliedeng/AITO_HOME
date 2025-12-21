@@ -6,6 +6,9 @@
     # ./default_modules/USE_PINNED_LLM_TERMINAL
   ];
 
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+
   time.timeZone = "America/Los_Angeles";
   i18n.defaultLocale = "en_US.UTF-8";
 
