@@ -22,7 +22,6 @@
 
   environment.systemPackages = with pkgs; [
     git
-    vim
   ];
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
