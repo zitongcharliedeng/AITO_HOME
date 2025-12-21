@@ -6,6 +6,8 @@ pkgs.testers.runNixOSTest {
   nodes.machine = { ... }: {
     imports = [ ../flake_modules/USE_SOFTWARE_CONFIG ];
 
+    users.mutableUsers = false;
+
     fileSystems."/" = {
       device = "/dev/vda1";
       fsType = "ext4";

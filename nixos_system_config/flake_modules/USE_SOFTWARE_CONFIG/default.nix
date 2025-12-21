@@ -14,6 +14,8 @@
   time.timeZone = "UTC";
   i18n.defaultLocale = "en_US.UTF-8";
 
+  users.mutableUsers = false;
+
   users.users.username = {
     isNormalUser = true;
     extraGroups = [ "wheel" "networkmanager" "video" "audio" ];

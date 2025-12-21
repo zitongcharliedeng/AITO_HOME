@@ -8,9 +8,9 @@ This is AITO's home. The system IS AITO (AI Task Orchestrator). Not "AITO runs o
 
 **SCREAMING_SNAKE_CASE scripts are spells.** Human-readable intentions you can cast. Even if your LLM goes down, you search for the spell name and cast it yourself. The LLM is just autocomplete on steroids.
 
-**Tests are specs written in human speech.** No implementation details (ghostty, i3, wayland). Helper functions like `terminal.exists()`, `terminal.isPinnedLeft()`. The test reads like a conversation.
+**Screenshot tests are the spec.** The screen IS the human experience. A screenshot captures exactly what a human would see. If the screenshot matches the golden, the experience is correct. Black box testing on human qualia.
 
-**The LLM figures out implementation.** You describe the critical user journey. LLM writes code until tests pass. You watch the test run visually. Verify it's green for the right reason. Give LGTM. Only then commit.
+**The LLM figures out implementation.** You describe the critical user journey as a sequence of screenshots. LLM writes code until screenshots match goldens. You review visual diffs in PRs. Give LGTM. Only then merge.
 
 ## Naming Conventions
 
@@ -33,50 +33,44 @@ AITO_HOME/
     │   │   └── ...
     │   └── USE_SOFTWARE_CONFIG/
     │
-    └── runtime_tests/
-        ├── SYSTEM_BOOTS.nix         # test definition
-        └── SYSTEM_BOOTS.py          # emergent behavior checks
+    └── screenshot_tests/
+        ├── JOURNEY_NAME.nix         # test definition
+        ├── JOURNEY_NAME.py          # actions to reach each screenshot
+        └── goldens/
+            └── JOURNEY_NAME/
+                ├── 01_first_state.png
+                ├── 02_after_action.png
+                └── ...
 ```
 
-## Two Types of Specs
+## Screenshot Testing Philosophy
 
-**The Nix config IS the declarative spec.** If `nixos-rebuild` succeeds, the declared config IS the system. Hostname, timezone, packages, users - Nix guarantees these.
+**Everything is a screenshot test.** The system is a visual desktop. The output is the screen. Test what humans experience.
 
-**Runtime tests verify emergent behavior.** Things that only exist when the system runs - GUI state, service responses, LLM interactions. These can't be declared, only observed.
+**Reproducible = same inputs → same screenshot.** With locally-hosted LLMs (fixed weights, temperature=0), even AI responses are deterministic. Same input produces same screen state produces same screenshot.
 
-### Nix Handles (declarative spec)
-- Configuration values (hostname, timezone, users, packages)
-- File contents
-- Service installation
-- Anything that's a 1:1 mapping from declaration to system state
+**The workflow:**
+1. Dev makes change
+2. Test runs, captures screenshots at each journey step
+3. Compares against golden PNGs
+4. Mismatch → test fails, shows visual diff
+5. Dev proposes new goldens if change is intentional
+6. You review visual diff in PR - "does this still look right?"
+7. Approve → new goldens become the spec
 
-### Runtime Tests Handle (emergent behavior)
-- **End-to-end scripts work** - the build script produces a bootable system
-- **Services respond** - not "is nginx installed" but "does nginx serve the page"
-- **GUI behavior** - window positioning, focus, visual state
-- **Non-deterministic interactions** - LLM responds appropriately
-- **Multi-component interactions** - component A talks to component B
+**Why screenshots over assertions:**
+- No brittle selectors or imperative checks
+- Captures the WHOLE experience, not just what you thought to test
+- Diffs are human-reviewable - you SEE the regression
+- The golden IS the spec - no translation layer
 
-### LLM Response Testing
-When testing LLM responses (non-deterministic), use an LLM as the validator:
-- Test sends input to the system LLM
-- Response is evaluated by a separate LLM judge
-- Judge checks: "Does this response satisfy the user intent?"
+**Skills "proc" visually.** When a skill triggers (like SELF_IMPROVE), it shows on screen. The screenshot captures the proc indicator. No need to test internal state - if it shows correctly, it works.
 
-### Runtime Test Convention
+### What Nix Handles vs What Screenshots Handle
 
-```python
-# Good - tests emergent runtime behavior
-with subtest("terminal is pinned to left side"):
-    ...
+**Nix guarantees declaratively:** hostname, timezone, packages, users, services installed. If `nixos-rebuild` succeeds, these are correct by definition.
 
-with subtest("user types hello and LLM responds"):
-    ...
-
-# Bad - Nix already guarantees this declaratively
-with subtest("hostname is AITO"):
-    ...
-```
+**Screenshots verify:** What the human actually sees. GUI layout, responses, visual feedback, the whole experience. These emerge at runtime and can only be observed, not declared.
 
 ## First Time Setup
 
