@@ -41,16 +41,42 @@ AITO_HOME/
         └── USE_SOFTWARE_CONFIG/
 ```
 
-## Test Helper Convention
+## What to Test
 
-```nix
+**Nix is declarative.** If `nixos-rebuild` succeeds, the declared config IS the system. Don't test what Nix already guarantees.
+
+### DON'T TEST (Nix handles it)
+- Configuration values (hostname, timezone, users, packages)
+- File contents declared in Nix
+- Service installation
+- Anything that's a direct 1:1 mapping from declaration to system state
+
+### DO TEST (runtime behavior)
+- **End-to-end scripts work** - the build script produces a bootable system
+- **Services respond** - not "is nginx installed" but "does nginx serve the page"
+- **GUI behavior** - window positioning, focus, visual state
+- **Non-deterministic interactions** - LLM responds appropriately
+- **Multi-component interactions** - component A talks to component B
+
+### LLM Response Testing
+When testing LLM responses (non-deterministic), use an LLM as the validator:
+- Test sends input to the system LLM
+- Response is evaluated by a separate LLM judge
+- Judge checks: "Does this response satisfy the user intent?"
+
+### Test Helper Convention
+
+```python
 # Good - reads like speech
-terminal.exists()
-terminal.isPinnedLeft()
-terminal.cannotBeClosed()
+with subtest("terminal is pinned to left side"):
+    ...
 
-# Bad - leaks implementation
-machine.succeed("pgrep -x ghostty")
+with subtest("user types hello and LLM responds"):
+    ...
+
+# Bad - testing what Nix already guarantees
+with subtest("hostname is AITO"):
+    ...
 ```
 
 ## First Time Setup
