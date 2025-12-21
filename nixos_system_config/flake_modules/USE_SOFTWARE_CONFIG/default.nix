@@ -1,4 +1,4 @@
-{ ... }:
+{ pkgs, ... }:
 
 {
   imports = [
@@ -19,6 +19,11 @@
     extraGroups = [ "wheel" "networkmanager" "video" "audio" ];
     initialPassword = "password";
   };
+
+  environment.systemPackages = with pkgs; [
+    git
+    vim
+  ];
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
