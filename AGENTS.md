@@ -26,32 +26,31 @@ AITO_HOME/
 └── nixos_system_config/
     ├── BUILD_NIXOS_FROM_FLAKE_FOR_MACHINE_.sh
     │
-    ├── CREATE_NEW_FEATURE/
-    │   ├── 1_DEFINE_USER_JOURNEY.sh
-    │   ├── 2_IMPLEMENT_UNTIL_GREEN.sh
-    │   ├── 3_WATCH_TEST_RUN.sh
-    │   └── 4_LGTM_AND_COMMIT.sh
-    │
     ├── flake.nix
-    └── flake_modules/
-        ├── USE_HARDWARE_CONFIG_FOR_MACHINE_/
-        │   ├── HYPER_V.nix          # auto-generated
-        │   ├── GPD_POCKET_4.nix     # auto-generated
-        │   └── ...
-        └── USE_SOFTWARE_CONFIG/
+    ├── flake_modules/
+    │   ├── USE_HARDWARE_CONFIG_FOR_MACHINE_/
+    │   │   ├── HYPER_V.nix          # auto-generated
+    │   │   └── ...
+    │   └── USE_SOFTWARE_CONFIG/
+    │
+    └── runtime_tests/
+        ├── SYSTEM_BOOTS.nix         # test definition
+        └── SYSTEM_BOOTS.py          # emergent behavior checks
 ```
 
-## What to Test
+## Two Types of Specs
 
-**Nix is declarative.** If `nixos-rebuild` succeeds, the declared config IS the system. Don't test what Nix already guarantees.
+**The Nix config IS the declarative spec.** If `nixos-rebuild` succeeds, the declared config IS the system. Hostname, timezone, packages, users - Nix guarantees these.
 
-### DON'T TEST (Nix handles it)
+**Runtime tests verify emergent behavior.** Things that only exist when the system runs - GUI state, service responses, LLM interactions. These can't be declared, only observed.
+
+### Nix Handles (declarative spec)
 - Configuration values (hostname, timezone, users, packages)
-- File contents declared in Nix
+- File contents
 - Service installation
-- Anything that's a direct 1:1 mapping from declaration to system state
+- Anything that's a 1:1 mapping from declaration to system state
 
-### DO TEST (runtime behavior)
+### Runtime Tests Handle (emergent behavior)
 - **End-to-end scripts work** - the build script produces a bootable system
 - **Services respond** - not "is nginx installed" but "does nginx serve the page"
 - **GUI behavior** - window positioning, focus, visual state
@@ -64,17 +63,17 @@ When testing LLM responses (non-deterministic), use an LLM as the validator:
 - Response is evaluated by a separate LLM judge
 - Judge checks: "Does this response satisfy the user intent?"
 
-### Test Helper Convention
+### Runtime Test Convention
 
 ```python
-# Good - reads like speech
+# Good - tests emergent runtime behavior
 with subtest("terminal is pinned to left side"):
     ...
 
 with subtest("user types hello and LLM responds"):
     ...
 
-# Bad - testing what Nix already guarantees
+# Bad - Nix already guarantees this declaratively
 with subtest("hostname is AITO"):
     ...
 ```
