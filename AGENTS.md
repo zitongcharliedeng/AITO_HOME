@@ -70,6 +70,7 @@ machine.succeed("pgrep -x ghostty")
    git clone https://github.com/zitongcharliedeng/AITO_HOME.git ~
    ~/nixos_system_config/BUILD_NIXOS_FROM_FLAKE_FOR_MACHINE_.sh MY_NEW_MACHINE
    ```
-7. Reboot - you now have AITO
+7. Reboot
+8. Login with `username` / `password` - you now have AITO
 
 The repo IS your home directory. The script auto-generates `MY_NEW_MACHINE.nix` with your hardware config. Machine names must be SCREAMING_SNAKE_CASE.
