@@ -7,11 +7,6 @@
     extraSessionCommands = ''
       export XDG_CURRENT_DESKTOP=sway
     '';
-    extraConfig = ''
-      bar swaybar_command true
-      exec ${pkgs.ghostty}/bin/ghostty
-      for_window [app_id="com.mitchellh.ghostty"] floating enable, resize set width 50 ppt height 100 ppt, move position 0 0
-    '';
   };
 
   services.greetd = {
@@ -21,6 +16,12 @@
       user = "greeter";
     };
   };
+
+  environment.etc."sway/config.d/aito.conf".text = ''
+    exec swaymsg bar mode invisible
+    exec ${pkgs.ghostty}/bin/ghostty
+    for_window [app_id="com.mitchellh.ghostty"] floating enable, resize set width 50 ppt height 100 ppt, move position 0 0
+  '';
 
   environment.systemPackages = [ pkgs.git ];
 
