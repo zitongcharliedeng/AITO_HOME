@@ -8,9 +8,9 @@ This is AITO's home. The system IS AITO (AI Task Orchestrator). Not "AITO runs o
 
 **SCREAMING_SNAKE_CASE scripts are spells.** Human-readable intentions you can cast. Even if your LLM goes down, you search for the spell name and cast it yourself. The LLM is just autocomplete on steroids.
 
-**Screenshot tests are the spec.** The screen IS the human experience. A screenshot captures exactly what a human would see. If the screenshot matches the golden, the experience is correct. Black box testing on human qualia.
+**Approval tests are the spec.** Golden masters capture human-perceivable output (screenshots, audio, structured text). If the output matches the golden, the experience is correct. Black box testing on human qualia. See: Llewellyn Falco's Approval Testing, Michael Feathers' Golden Master Testing.
 
-**The LLM figures out implementation.** You describe the critical user journey as a sequence of screenshots. LLM writes code until screenshots match goldens. You review visual diffs in PRs. Give LGTM. Only then merge.
+**The LLM figures out implementation.** You describe the critical user journey. LLM writes code until outputs match goldens. You review diffs in PRs. Give LGTM. Only then merge.
 
 ## Naming Conventions
 
@@ -33,44 +33,49 @@ AITO_HOME/
     │   │   └── ...
     │   └── USE_SOFTWARE_CONFIG/
     │
-    └── screenshot_tests/
-        ├── JOURNEY_NAME.nix         # test definition
-        ├── JOURNEY_NAME.py          # actions to reach each screenshot
+    └── approval_tests/
+        ├── INTENTION_NAME.nix       # test definition (e.g., FIRST_BOOT_SHOWS_LOGIN.nix)
+        ├── INTENTION_NAME.py        # actions to reach each checkpoint
         └── goldens/
-            └── JOURNEY_NAME/
-                ├── 01_first_state.png
-                ├── 02_after_action.png
+            └── INTENTION_NAME/
+                ├── 01_checkpoint.png    # screenshot golden
+                ├── 02_checkpoint.wav    # audio golden (future)
                 └── ...
 ```
 
-## Screenshot Testing Philosophy
+## Approval Testing Philosophy
 
-**Everything is a screenshot test.** The system is a visual desktop. The output is the screen. Test what humans experience.
+**Test human-perceivable output.** The system is a visual desktop. Test what humans experience - screens, sounds, structured responses. Black box approach.
 
-**Reproducible = same inputs → same screenshot.** With locally-hosted LLMs (fixed weights, temperature=0), even AI responses are deterministic. Same input produces same screen state produces same screenshot.
+**Golden types:**
+- **Screenshots** (.png) - what the user sees
+- **Audio** (.wav) - what the user hears (future)
+- **Text patterns** (regex) - structured LLM responses, skill procs
 
-**The workflow:**
-1. Dev makes change
-2. Test runs, captures screenshots at each journey step
-3. Compares against golden PNGs
-4. Mismatch → test fails, shows visual diff
-5. Dev proposes new goldens if change is intentional
-6. You review visual diff in PR - "does this still look right?"
-7. Approve → new goldens become the spec
+**Reproducible = same inputs → same output.** With locally-hosted LLMs (fixed weights, temperature=0), even AI responses are deterministic. Same input → same output → same golden.
 
-**Why screenshots over assertions:**
+### Four-Step Workflow for Adding Features
+
+1. **Describe the intention** - Write a test file named after what SHOULD happen (e.g., `TERMINAL_PINNED_LEFT.nix`). The name IS the spec.
+
+2. **First run captures output** - No golden exists yet. Test runs, captures output (screenshot/audio/text). Test "fails" because there's nothing to compare against.
+
+3. **Approve or reject** - You review the captured output. Does it match your intention? If yes, it becomes the golden. If no, LLM keeps iterating.
+
+4. **Goldens prevent regression** - Future runs compare against approved goldens. Mismatch = failure. You review diff in PR. Approve new golden or reject the change.
+
+### Why Goldens Over Assertions
+
 - No brittle selectors or imperative checks
 - Captures the WHOLE experience, not just what you thought to test
-- Diffs are human-reviewable - you SEE the regression
+- Diffs are human-reviewable - you SEE/HEAR the regression
 - The golden IS the spec - no translation layer
 
-**Skills "proc" visually.** When a skill triggers (like SELF_IMPROVE), it shows on screen. The screenshot captures the proc indicator. No need to test internal state - if it shows correctly, it works.
-
-### What Nix Handles vs What Screenshots Handle
+### What Nix Handles vs What Approval Tests Handle
 
 **Nix guarantees declaratively:** hostname, timezone, packages, users, services installed. If `nixos-rebuild` succeeds, these are correct by definition.
 
-**Screenshots verify:** What the human actually sees. GUI layout, responses, visual feedback, the whole experience. These emerge at runtime and can only be observed, not declared.
+**Approval tests verify:** What the human actually perceives. GUI layout, sounds, responses, the whole experience. These emerge at runtime and can only be observed, not declared.
 
 ## First Time Setup
 

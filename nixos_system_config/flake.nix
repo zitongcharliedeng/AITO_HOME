@@ -11,13 +11,13 @@
       pkgs = nixpkgs.legacyPackages.${system};
       lib = nixpkgs.lib;
       machinesDir = ./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_;
-      screenshotTestsDir = ./screenshot_tests;
+      approvalTestsDir = ./approval_tests;
 
       machineFiles = builtins.readDir machinesDir;
       machineNames = builtins.filter (name: lib.hasSuffix ".nix" name) (builtins.attrNames machineFiles);
 
-      screenshotTestFiles = builtins.readDir screenshotTestsDir;
-      screenshotTestNames = builtins.filter (name: lib.hasSuffix ".nix" name) (builtins.attrNames screenshotTestFiles);
+      approvalTestFiles = builtins.readDir approvalTestsDir;
+      approvalTestNames = builtins.filter (name: lib.hasSuffix ".nix" name) (builtins.attrNames approvalTestFiles);
 
       mkSystem = file: nixpkgs.lib.nixosSystem {
         inherit system;
@@ -39,8 +39,8 @@
       checks.${system} = builtins.listToAttrs (
         map (file: {
           name = builtins.replaceStrings [".nix"] [""] file;
-          value = import (screenshotTestsDir + "/${file}") { inherit pkgs; };
-        }) screenshotTestNames
+          value = import (approvalTestsDir + "/${file}") { inherit pkgs; };
+        }) approvalTestNames
       );
     };
 }

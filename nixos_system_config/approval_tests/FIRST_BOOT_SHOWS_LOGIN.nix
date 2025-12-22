@@ -1,7 +1,7 @@
 { pkgs, ... }:
 
 pkgs.testers.runNixOSTest {
-  name = "system-boots";
+  name = "first-boot-shows-login";
 
   nodes.machine = { ... }: {
     imports = [ ../flake_modules/USE_SOFTWARE_CONFIG ];
@@ -14,5 +14,5 @@ pkgs.testers.runNixOSTest {
     };
   };
 
-  testScript = builtins.readFile ./SYSTEM_BOOTS.py;
+  testScript = builtins.readFile ./FIRST_BOOT_SHOWS_LOGIN.py;
 }
