@@ -2,21 +2,19 @@
 
 let
   niriConfig = pkgs.writeText "config.kdl" ''
-    spawn-at-startup "${pkgs.ghostty}/bin/ghostty"
-
     window-rule {
       match app-id="com.mitchellh.ghostty"
       default-column-width { proportion 0.5; }
     }
   '';
+  ghosttyWrapper = pkgs.writeShellScript "ghostty-start" ''
+    export GSK_RENDERER=cairo
+    export LIBGL_ALWAYS_SOFTWARE=1
+    exec ${pkgs.ghostty}/bin/ghostty
+  '';
 in
 {
   hardware.graphics.enable = true;
-
-  environment.variables = {
-    GSK_RENDERER = "cairo";
-    LIBGL_ALWAYS_SOFTWARE = "1";
-  };
 
   programs.niri.enable = true;
 
@@ -25,6 +23,18 @@ in
     settings.default_session = {
       command = "${pkgs.tuigreet}/bin/tuigreet --cmd niri";
       user = "greeter";
+    };
+  };
+
+  systemd.user.services.ghostty = {
+    description = "Ghostty terminal";
+    after = [ "graphical-session.target" ];
+    partOf = [ "graphical-session.target" ];
+    wantedBy = [ "graphical-session.target" ];
+    serviceConfig = {
+      ExecStart = ghosttyWrapper;
+      Restart = "on-failure";
+      RestartSec = 1;
     };
   };
 
