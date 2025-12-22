@@ -14,10 +14,10 @@ def login(m, password):
     m.sleep(15)
 
 def open_terminal(m):
-    """Open a terminal (ghostty)."""
+    """Open GNOME Console (kgx) - GNOME's default terminal."""
     m.send_key("super")
     m.sleep(3)
-    m.send_chars("ghostty")
+    m.send_chars("console")
     m.sleep(2)
     m.send_key("ret")
     m.sleep(5)
