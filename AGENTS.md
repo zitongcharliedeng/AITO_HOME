@@ -12,10 +12,41 @@ This is AITO's home. The system IS AITO (AI Task Orchestrator). Not "AITO runs o
 
 **The LLM figures out implementation.** You describe the critical user journey. LLM writes code until outputs match goldens. You review diffs in PRs. Give LGTM. Only then merge.
 
+**Tests bend to production, NOT the other way around.** Never modify production config to make tests pass. If the test fails, fix the test or fix the actual implementation - never add test-only hacks to production.
+
 ## Naming Conventions
 
 - **SCREAMING_SNAKE_CASE** = Spells (APIs). The only way to interact with the system.
 - **lowercase** = Implementation details. Never called directly.
+
+## Test Naming
+
+Test names are long descriptive sentences describing the EXPECTED STATE, not implementation steps.
+
+**Good:** `TERMINAL_IS_VISIBLE_ON_LEFT_HALF_OF_SCREEN_SHOWING_HOME_DIRECTORY_IS_A_GIT_REPO`
+**Bad:** `AFTER_LOGIN_TERMINAL_SHOWS_GIT_REPO` (implies action, not state)
+
+The test should simply: boot → login → screenshot. If the system is correct, the expected state is already there. No workarounds in tests (opening apps, closing dialogs, pressing shortcuts).
+
+## Code Style
+
+**Use keyword arguments for clarity.** When calling functions, use `login(machine, password="password")` not `login(machine, "password")`.
+
+**Comments are OK** if they accompany implementation details inside helper functions.
+
+**Don't assemble things yourself.** Use existing well-maintained NixOS modules. If brightness/bluetooth/etc needs to work, find a module that handles it - don't cobble together services manually.
+
+## The Desktop Vision
+
+**Minimal, not full desktop environment.**
+
+- **Hardware controls bar (top)** - brightness, bluetooth, volume, wifi, battery, auto-rotation. Uses existing well-maintained module (GNOME top bar, COSMIC bar, or similar). This is the "hardware controls shell" - services + top bar UI only.
+- **Terminal pinned left 50%** - immovable, unclosable, always visible. Like it's built into the background.
+- **Right 50% empty** - for future use (browser, etc.)
+- **No shortcuts by default** - the terminal is just THERE
+- **No windows, no workspaces, no app launcher, no welcome dialogs**
+
+The system is a terminal with hardware controls. That's it.
 
 ## Approval Testing Philosophy
 
@@ -28,11 +59,19 @@ This is AITO's home. The system IS AITO (AI Task Orchestrator). Not "AITO runs o
 
 **Reproducible = same inputs → same output.** With locally-hosted LLMs (fixed weights, temperature=0), even AI responses are deterministic. Same input → same output → same golden.
 
+### Approval Workflow
+
+1. **No golden exists** → test runs, captures output, human must approve to create golden
+2. **Golden exists, output matches** → test passes
+3. **Golden exists, output differs** → test fails, human must approve change or reject
+
+Goldens live in `approval_tests/TEST_NAME/goldens/`. Screenshots are committed to the PR branch for human review.
+
 ### Four-Step Workflow for Adding Features
 
-1. **Describe the intention** - Write a test file named after what SHOULD happen (e.g., `TERMINAL_PINNED_LEFT.nix`). The name IS the spec.
+1. **Describe the intention** - Write a test file named after what SHOULD happen. The name IS the spec.
 
-2. **First run captures output** - No golden exists yet. Test runs, captures output (screenshot/audio/text). Test "fails" because there's nothing to compare against.
+2. **First run captures output** - No golden exists yet. Test runs, captures output. Test "fails" because there's nothing to compare against.
 
 3. **Approve or reject** - You review the captured output. Does it match your intention? If yes, it becomes the golden. If no, LLM keeps iterating.
 
@@ -50,6 +89,18 @@ This is AITO's home. The system IS AITO (AI Task Orchestrator). Not "AITO runs o
 **Nix guarantees declaratively:** hostname, timezone, packages, users, services installed. If `nixos-rebuild` succeeds, these are correct by definition.
 
 **Approval tests verify:** What the human actually perceives. GUI layout, sounds, responses, the whole experience. These emerge at runtime and can only be observed, not declared.
+
+## Agent Workflow Rules
+
+**Only hand back when tests pass.** Don't give incomplete work to the human. Run tests, fix failures, then hand back.
+
+**Source of truth is GitHub.** All changes go through PRs. Whether using agent, VS Code, or Vim - it all flows through GitHub.
+
+**Local testing for speed.** Agents should know how to run tests locally:
+```
+nix build .#checks.x86_64-linux.TEST_NAME
+```
+Don't wait for GitHub Actions when you can iterate locally.
 
 ## First Time Setup
 
