@@ -1,15 +1,15 @@
 def wait_for_login_screen(m):
-    """Wait until the login screen is visible."""
-    m.wait_until_succeeds("pgrep gnome-shell", timeout=120)
+    """Wait until the COSMIC greeter is visible."""
+    m.wait_until_succeeds("pgrep cosmic-greeter", timeout=120)
     m.sleep(30)
 
 def wait_for_desktop(m):
-    """Wait until the desktop is ready after login."""
+    """Wait until the COSMIC desktop is ready after login."""
     m.wait_until_succeeds(
         "loginctl show-user username -p State | grep -q active",
         timeout=120
     )
-    m.wait_until_succeeds("pgrep -u 1000 gnome-shell", timeout=60)
+    m.wait_until_succeeds("pgrep -u 1000 cosmic-comp", timeout=60)
     m.sleep(5)
 
 def login(m, *, password):

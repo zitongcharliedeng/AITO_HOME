@@ -1,9 +1,8 @@
 { pkgs, ... }:
 
 {
-  services.xserver.enable = true;
-  services.displayManager.gdm.enable = true;
-  services.desktopManager.gnome.enable = true;
+  services.displayManager.cosmic-greeter.enable = true;
+  services.desktopManager.cosmic.enable = true;
 
   hardware.bluetooth.enable = true;
   services.pipewire = {
@@ -14,6 +13,5 @@
 
   environment.systemPackages = with pkgs; [
     git
-    ghostty
   ];
 }
