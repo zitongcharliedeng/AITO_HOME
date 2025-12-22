@@ -10,12 +10,24 @@ def wait_for_desktop(m):
         "loginctl show-user username -p State | grep -q active",
         timeout=120
     )
-    # Also ensure gnome-shell is running as the user
+    # Wait for gnome-shell running as the user (not GDM's greeter)
     m.wait_until_succeeds(
         "pgrep -u 1000 gnome-shell",
-        timeout=30
+        timeout=60
     )
-    m.sleep(20)  # Give desktop time to fully render after session switch
+    # Wait for GNOME Shell to be fully initialized by checking for the overview/desktop
+    # The overview (Activities) is the key indicator that the session is ready
+    m.wait_until_succeeds(
+        "dbus-send --session --dest=org.gnome.Shell --type=method_call --print-reply "
+        "/org/gnome/Shell org.freedesktop.DBus.Properties.Get "
+        "string:'org.gnome.Shell' string:'OverviewActive' 2>/dev/null || "
+        "sudo -u username DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus "
+        "dbus-send --session --dest=org.gnome.Shell --type=method_call --print-reply "
+        "/org/gnome/Shell org.freedesktop.DBus.Properties.Get "
+        "string:'org.gnome.Shell' string:'OverviewActive'",
+        timeout=60
+    )
+    m.sleep(5)  # Brief pause for rendering
 
 def login(m, password):
     """Log in - click user first, then enter password."""
