@@ -13,6 +13,11 @@ in
 {
   hardware.graphics.enable = true;
 
+  environment.variables = {
+    GSK_RENDERER = "cairo";
+    LIBGL_ALWAYS_SOFTWARE = "1";
+  };
+
   programs.niri.enable = true;
 
   services.greetd = {
