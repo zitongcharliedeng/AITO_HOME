@@ -2,13 +2,6 @@
 
 pkgs.testers.runNixOSTest {
   name = "FIRST_BOOT_SHOWS_LOGIN";
-
-  nodes.machine = { ... }: {
-    imports = [
-      ../../flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_/TEST_VM.nix
-      ../../flake_modules/USE_SOFTWARE_CONFIG
-    ];
-  };
-
+  nodes.machine = import ../TEST_MACHINE.nix;
   testScript = builtins.readFile ./default.py;
 }
