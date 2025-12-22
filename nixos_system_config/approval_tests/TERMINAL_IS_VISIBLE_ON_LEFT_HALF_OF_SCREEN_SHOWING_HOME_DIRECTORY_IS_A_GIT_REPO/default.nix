@@ -1,7 +1,7 @@
 { pkgs, systemModules }:
 
 pkgs.testers.runNixOSTest {
-  name = "AFTER_LOGIN_TERMINAL_SHOWS_GIT_REPO";
+  name = "TERMINAL_IS_VISIBLE_ON_LEFT_HALF_OF_SCREEN_SHOWING_HOME_DIRECTORY_IS_A_GIT_REPO";
   nodes.machine = {
     imports = systemModules.TEST_VM;
     virtualisation.qemu.options = [ "-vga virtio" ];
