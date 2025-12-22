@@ -36,7 +36,7 @@ The test should simply: boot → login → screenshot. If the system is correct,
 
 **Comments are OK** if they accompany implementation details inside helper functions.
 
-**Don't assemble things yourself.** Use existing well-maintained NixOS modules. If brightness/bluetooth/etc needs to work, find a module that handles it - don't cobble together services manually.
+**99% imports, 1% glue.** In an ideal world, all code is imports with good names. No bespoke code. No reinventing wheels. If you see the bar at the top, assume the hardware works - someone else tested it. Unix philosophy: use pre-made, well-maintained modules.
 
 ## Approval Testing Philosophy
 
