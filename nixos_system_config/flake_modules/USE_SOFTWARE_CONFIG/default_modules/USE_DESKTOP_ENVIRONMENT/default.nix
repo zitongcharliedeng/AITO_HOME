@@ -21,9 +21,13 @@ in
     };
   };
 
-  environment.etc."xdg/niri/config.kdl".source = niriConfig;
+  system.activationScripts.niriConfig = ''
+    mkdir -p /home/username/.config/niri
+    cp -f ${niriConfig} /home/username/.config/niri/config.kdl
+    chown -R username:users /home/username/.config
+  '';
 
-  environment.systemPackages = [ pkgs.git ];
+  environment.systemPackages = [ pkgs.git pkgs.ghostty ];
 
   programs.bash.interactiveShellInit = ''
     __update_ps1() {
