@@ -1,0 +1,22 @@
+# i3 config - minimal, Ghostty pinned left 50%
+
+set $mod Mod4
+
+# No window decorations
+default_border none
+default_floating_border none
+
+# Ghostty starts on left, takes 50%
+for_window [class="ghostty"] move to workspace 1, resize set 50 ppt 100 ppt, move position 0 0
+
+# Launch Ghostty on startup
+exec --no-startup-id ghostty
+
+# Brightness keys
+bindsym XF86MonBrightnessUp exec light -A 10
+bindsym XF86MonBrightnessDown exec light -U 10
+
+# Volume keys
+bindsym XF86AudioRaiseVolume exec pactl set-sink-volume @DEFAULT_SINK@ +5%
+bindsym XF86AudioLowerVolume exec pactl set-sink-volume @DEFAULT_SINK@ -5%
+bindsym XF86AudioMute exec pactl set-sink-mute @DEFAULT_SINK@ toggle

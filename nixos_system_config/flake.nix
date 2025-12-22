@@ -10,42 +10,32 @@
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
       lib = nixpkgs.lib;
-      machinesDir = ./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_;
-      approvalTestsDir = ./approval_tests;
 
-      # Shared software config - used by both real machines and tests
-      softwareModules = [
-        ./flake_modules/USE_SOFTWARE_CONFIG
-        { nixpkgs.config.allowUnfree = true; }
-      ];
+      machineFiles = lib.filterAttrs (n: _: lib.hasSuffix ".nix" n)
+        (builtins.readDir ./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_);
 
-      machineFiles = builtins.readDir machinesDir;
-      machineNames = builtins.filter (name: lib.hasSuffix ".nix" name) (builtins.attrNames machineFiles);
-
-      approvalTestFiles = builtins.readDir approvalTestsDir;
-      approvalTestNames = builtins.filter (name: lib.hasSuffix ".nix" name) (builtins.attrNames approvalTestFiles);
+      approvalTestFiles = lib.filterAttrs (n: _: lib.hasSuffix ".nix" n)
+        (builtins.readDir ./approval_tests);
 
       mkSystem = file: nixpkgs.lib.nixosSystem {
         inherit system;
-        modules = [ (machinesDir + "/${file}") ] ++ softwareModules;
+        modules = [
+          (./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_ + "/${file}")
+          ./flake_modules/USE_SOFTWARE_CONFIG
+        ];
       };
     in
     {
-      # Shared modules - tests import these directly
-      inherit softwareModules;
+      softwareModules = [ ./flake_modules/USE_SOFTWARE_CONFIG ];
 
-      nixosConfigurations = builtins.listToAttrs (
-        map (file: {
-          name = builtins.replaceStrings [".nix"] [""] file;
-          value = mkSystem file;
-        }) machineNames
-      );
+      nixosConfigurations = lib.mapAttrs' (file: _: {
+        name = lib.removeSuffix ".nix" file;
+        value = mkSystem file;
+      }) machineFiles;
 
-      checks.${system} = builtins.listToAttrs (
-        map (file: {
-          name = builtins.replaceStrings [".nix"] [""] file;
-          value = import (approvalTestsDir + "/${file}") { inherit pkgs self; };
-        }) approvalTestNames
-      );
+      checks.${system} = lib.mapAttrs' (file: _: {
+        name = lib.removeSuffix ".nix" file;
+        value = import (./approval_tests + "/${file}") { inherit pkgs self; };
+      }) approvalTestFiles;
     };
 }
