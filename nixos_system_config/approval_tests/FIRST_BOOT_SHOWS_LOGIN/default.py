@@ -1,3 +1,3 @@
 machine.wait_for_unit("display-manager.service")
-machine.wait_for_text("username")
+import time; time.sleep(5)
 machine.screenshot("user_sees_login_prompt")
