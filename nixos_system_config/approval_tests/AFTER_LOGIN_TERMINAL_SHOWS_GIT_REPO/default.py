@@ -5,10 +5,10 @@ def wait_for_login_screen(m):
 
 def wait_for_desktop(m):
     """Wait until the GNOME desktop is ready after login."""
-    # When user logs in, a second gnome-shell process starts (user session, not GDM)
-    # GDM runs one gnome-shell, user session runs another
+    # Wait for gnome-shell running as UID 1000 (the user, not gdm)
+    # GDM's gnome-shell runs as gdm user, user session runs as UID 1000
     m.wait_until_succeeds(
-        "test $(pgrep -c gnome-shell) -ge 2",
+        "pgrep -u 1000 gnome-shell",
         timeout=120
     )
     m.sleep(15)  # Give desktop time to fully render
