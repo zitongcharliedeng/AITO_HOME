@@ -22,6 +22,7 @@
         modules = [
           (./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_ + "/${file}")
           ./flake_modules/USE_SOFTWARE_CONFIG
+          { nixpkgs.config.allowUnfree = true; }
         ];
       };
     in
