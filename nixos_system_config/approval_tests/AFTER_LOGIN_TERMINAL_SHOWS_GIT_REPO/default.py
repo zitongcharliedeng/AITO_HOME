@@ -14,11 +14,10 @@ def login(m, password):
     m.sleep(15)
 
 def open_terminal(m):
-    """Open GNOME Console (kgx) - GNOME's default terminal."""
-    m.send_key("super")
-    m.sleep(3)
-    m.send_chars("console")
+    """Open terminal via Alt+F2 run dialog."""
+    m.send_key("alt-f2")
     m.sleep(2)
+    m.send_chars("gnome-terminal")
     m.send_key("ret")
     m.sleep(5)
 
