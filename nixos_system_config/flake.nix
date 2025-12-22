@@ -26,8 +26,6 @@
       };
     in
     {
-      softwareModules = [ ./flake_modules/USE_SOFTWARE_CONFIG ];
-
       nixosConfigurations = lib.mapAttrs' (file: _: {
         name = lib.removeSuffix ".nix" file;
         value = mkSystem file;
