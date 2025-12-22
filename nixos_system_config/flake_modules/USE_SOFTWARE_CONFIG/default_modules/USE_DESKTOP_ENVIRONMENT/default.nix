@@ -8,20 +8,25 @@ let
     }
   '';
   ghosttyWrapper = pkgs.writeShellScript "ghostty-start" ''
-    export GSK_RENDERER=cairo
-    export LIBGL_ALWAYS_SOFTWARE=1
     exec ${pkgs.ghostty}/bin/ghostty
   '';
 in
 {
   hardware.graphics.enable = true;
 
+  environment.variables = {
+    LIBGL_ALWAYS_SOFTWARE = "1";
+    GALLIUM_DRIVER = "llvmpipe";
+    __GLX_VENDOR_LIBRARY_NAME = "mesa";
+    MESA_GL_VERSION_OVERRIDE = "4.5";
+  };
+
   programs.niri.enable = true;
 
   services.greetd = {
     enable = true;
     settings.default_session = {
-      command = "${pkgs.tuigreet}/bin/tuigreet --cmd niri";
+      command = "${pkgs.tuigreet}/bin/tuigreet --cmd niri-session";
       user = "greeter";
     };
   };
