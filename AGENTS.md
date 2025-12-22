@@ -2,6 +2,8 @@
 
 This is the only context file. Humans are agents too.
 
+**This file contains philosophy and conventions only.** No implementation specs. The test names ARE the specs - putting specs here adds indirection.
+
 This is AITO's home. The system IS AITO (AI Task Orchestrator). Not "AITO runs on the system" - the whole thing is one entity.
 
 ## Philosophy
