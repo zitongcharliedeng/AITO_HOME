@@ -1,7 +1,7 @@
-{ pkgs, self }:
+{ pkgs }:
 
 pkgs.testers.runNixOSTest {
-  name = "first-boot-shows-login";
+  name = "FIRST_BOOT_SHOWS_LOGIN";
 
   nodes.machine = { ... }: {
     imports = [

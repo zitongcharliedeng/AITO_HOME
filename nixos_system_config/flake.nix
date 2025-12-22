@@ -11,27 +11,21 @@
       pkgs = nixpkgs.legacyPackages.${system};
       lib = nixpkgs.lib;
 
-      dirsIn = dir: lib.filterAttrs (_: type: type == "directory") (builtins.readDir dir);
-      nixFilesIn = dir: lib.filterAttrs (n: _: lib.hasSuffix ".nix" n) (builtins.readDir dir);
-
-      approvalTests = lib.mapAttrs (name: _:
-        import (./approval_tests + "/${name}") { inherit pkgs self; }
-      ) (dirsIn ./approval_tests);
-
-      mkSystem = file: nixpkgs.lib.nixosSystem {
-        inherit system;
-        modules = [
-          (./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_ + "/${file}")
-          ./flake_modules/USE_SOFTWARE_CONFIG
-          { nixpkgs.config.allowUnfree = true; }
-        ];
+      approvalTests = {
+        FIRST_BOOT_SHOWS_LOGIN = import ./approval_tests/FIRST_BOOT_SHOWS_LOGIN { inherit pkgs; };
       };
     in
     {
-      nixosConfigurations = lib.mapAttrs' (file: _: {
-        name = lib.removeSuffix ".nix" file;
-        value = mkSystem file;
-      }) (nixFilesIn ./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_);
+      nixosConfigurations = {
+        TEST_VM = lib.nixosSystem {
+          inherit system;
+          modules = [
+            ./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_/TEST_VM.nix
+            ./flake_modules/USE_SOFTWARE_CONFIG
+            { nixpkgs.config.allowUnfree = true; }
+          ];
+        };
+      };
 
       checks.${system} = approvalTests;
 
