@@ -17,32 +17,6 @@ This is AITO's home. The system IS AITO (AI Task Orchestrator). Not "AITO runs o
 - **SCREAMING_SNAKE_CASE** = Spells (APIs). The only way to interact with the system.
 - **lowercase** = Implementation details. Never called directly.
 
-## Directory Structure
-
-```
-AITO_HOME/
-├── AGENTS.md
-│
-└── nixos_system_config/
-    ├── BUILD_NIXOS_FROM_FLAKE_FOR_MACHINE_.sh
-    │
-    ├── flake.nix
-    ├── flake_modules/
-    │   ├── USE_HARDWARE_CONFIG_FOR_MACHINE_/
-    │   │   ├── HYPER_V.nix          # auto-generated
-    │   │   └── ...
-    │   └── USE_SOFTWARE_CONFIG/
-    │
-    └── approval_tests/
-        ├── INTENTION_NAME.nix       # test definition (e.g., FIRST_BOOT_SHOWS_LOGIN.nix)
-        ├── INTENTION_NAME.py        # actions to reach each checkpoint
-        └── goldens/
-            └── INTENTION_NAME/
-                ├── 01_checkpoint.png    # screenshot golden
-                ├── 02_checkpoint.wav    # audio golden (future)
-                └── ...
-```
-
 ## Approval Testing Philosophy
 
 **Test human-perceivable output.** The system is a visual desktop. Test what humans experience - screens, sounds, structured responses. Black box approach.
@@ -91,7 +65,6 @@ AITO_HOME/
 6. Run:
    ```
    nix-shell -p git
-   rm -rf ~/* ~/.*  # Clear installer's home (backup anything you need first)
    git clone https://github.com/zitongcharliedeng/AITO_HOME.git .
    ~/nixos_system_config/BUILD_NIXOS_FROM_FLAKE_FOR_MACHINE_.sh MY_NEW_MACHINE
    ```
