@@ -14,10 +14,10 @@ def login(m, password):
     m.sleep(15)
 
 def open_terminal(m):
-    """Open a terminal."""
+    """Open a terminal (ghostty)."""
     m.send_key("super")
     m.sleep(3)
-    m.send_chars("terminal")
+    m.send_chars("ghostty")
     m.sleep(2)
     m.send_key("ret")
     m.sleep(5)
