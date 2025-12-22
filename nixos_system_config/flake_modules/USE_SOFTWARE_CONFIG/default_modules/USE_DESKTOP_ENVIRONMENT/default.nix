@@ -16,16 +16,12 @@ in
   services.greetd = {
     enable = true;
     settings.default_session = {
-      command = "${pkgs.tuigreet}/bin/tuigreet --cmd niri-session";
+      command = "${pkgs.tuigreet}/bin/tuigreet --cmd niri";
       user = "greeter";
     };
   };
 
-  system.activationScripts.niriConfig = ''
-    mkdir -p /home/username/.config/niri
-    cp ${niriConfig} /home/username/.config/niri/config.kdl
-    chown -R username:users /home/username/.config
-  '';
+  environment.etc."xdg/niri/config.kdl".source = niriConfig;
 
   environment.systemPackages = [ pkgs.git ];
 
