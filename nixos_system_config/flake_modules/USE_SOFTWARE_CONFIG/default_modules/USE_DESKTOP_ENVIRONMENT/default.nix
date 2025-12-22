@@ -18,10 +18,9 @@
   };
 
   environment.etc."sway/config.d/aito.conf".text = ''
-    bar {
-      mode invisible
-    }
+    bar swaybar_command true
     exec ${pkgs.ghostty}/bin/ghostty
+    for_window [app_id="ghostty"] resize set width 50 ppt
     for_window [app_id="com.mitchellh.ghostty"] resize set width 50 ppt
   '';
 

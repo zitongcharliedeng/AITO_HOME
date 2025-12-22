@@ -1,4 +1,4 @@
-{ ... }:
+{ pkgs, ... }:
 
 {
   imports = [
@@ -19,7 +19,17 @@
     isNormalUser = true;
     extraGroups = [ "wheel" "networkmanager" "video" "audio" ];
     initialPassword = "password";
+    home = "/home/username";
   };
+
+  system.activationScripts.initHomeGit = ''
+    if [ ! -d /home/username/.git ]; then
+      mkdir -p /home/username
+      cd /home/username
+      ${pkgs.git}/bin/git init
+      chown -R username:users /home/username
+    fi
+  '';
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
