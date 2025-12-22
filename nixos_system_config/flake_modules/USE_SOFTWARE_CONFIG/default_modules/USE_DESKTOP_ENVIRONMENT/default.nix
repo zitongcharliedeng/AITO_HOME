@@ -3,7 +3,6 @@
 {
   services.xserver.enable = true;
   services.displayManager.gdm.enable = true;
-  services.displayManager.gdm.wayland = false;
   services.desktopManager.gnome.enable = true;
 
   hardware.bluetooth.enable = true;
