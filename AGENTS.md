@@ -34,7 +34,9 @@ The test should simply: boot → login → screenshot. If the system is correct,
 
 **Use keyword arguments for clarity.** When calling functions, use `login(machine, password="password")` not `login(machine, "password")`.
 
-**Comments are OK** if they accompany implementation details inside helper functions.
+**No comments or docstrings.** Function names and parameters should be self-explanatory. If you need a comment, your naming is bad.
+
+**Minimal code to pass tests.** The smallest amount of lines, smallest amount of size needed to make tests pass. Don't over-engineer.
 
 **99% imports, 1% glue.** In an ideal world, all code is imports with good names. No bespoke code. No reinventing wheels. If you see the bar at the top, assume the hardware works - someone else tested it. Unix philosophy: use pre-made, well-maintained modules.
 
