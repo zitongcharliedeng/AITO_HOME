@@ -19,11 +19,11 @@
 
   environment.etc."sway/config.d/aito.conf".text = ''
     bar {
-      mode invisible
+      mode hide
+      hidden_state hide
     }
     exec ${pkgs.ghostty}/bin/ghostty
-    for_window [app_id="ghostty"] resize set width 50 ppt
-    for_window [app_id="com.mitchellh.ghostty"] resize set width 50 ppt
+    for_window [app_id="com.mitchellh.ghostty"] floating enable, resize set width 50 ppt height 100 ppt, move position 0 0
   '';
 
   environment.systemPackages = [ pkgs.git ];
@@ -33,6 +33,6 @@
       local branch=$(git branch 2>/dev/null | grep '^*' | sed 's/* //')
       [ -n "$branch" ] && echo " ($branch)"
     }
-    PS1='[\u@\h:\w\$(__git_ps1)]\$ '
+    PS1='[\u@\h:\w$(__git_ps1)]\$ '
   '';
 }
