@@ -2,10 +2,10 @@
 
 let
   niriConfig = pkgs.writeText "config.kdl" ''
-    spawn-at-startup "${pkgs.ghostty}/bin/ghostty"
+    spawn-at-startup "${pkgs.foot}/bin/foot"
 
     window-rule {
-      match app-id="com.mitchellh.ghostty"
+      match app-id="foot"
       default-column-width { proportion 0.5; }
     }
   '';
@@ -27,7 +27,7 @@ in
     chown -R username:users /home/username/.config
   '';
 
-  environment.systemPackages = [ pkgs.git pkgs.ghostty ];
+  environment.systemPackages = [ pkgs.git pkgs.foot ];
 
   programs.bash.interactiveShellInit = ''
     __update_ps1() {
