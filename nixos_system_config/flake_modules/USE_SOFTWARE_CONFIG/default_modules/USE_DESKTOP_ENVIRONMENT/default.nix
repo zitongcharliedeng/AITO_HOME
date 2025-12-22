@@ -7,6 +7,7 @@ let
     debug {
       disable-direct-scanout
       disable-cursor-plane
+      render-drm-device "/dev/dri/renderD128"
     }
 
     window-rule {
@@ -30,7 +31,7 @@ in
   services.greetd = {
     enable = true;
     settings.default_session = {
-      command = "${pkgs.tuigreet}/bin/tuigreet --cmd 'niri --session'";
+      command = "${pkgs.tuigreet}/bin/tuigreet --cmd niri";
       user = "greeter";
     };
   };
