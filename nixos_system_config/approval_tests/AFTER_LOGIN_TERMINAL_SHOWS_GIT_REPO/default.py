@@ -3,31 +3,39 @@ def wait_for_login_screen(m):
     m.wait_until_succeeds("pgrep gnome-shell", timeout=120)
     m.sleep(30)
 
-def login(m, username, password):
-    """Log in as a user."""
-    m.send_chars(f"{password}\n")
-    m.sleep(10)
+def login(m, password):
+    """Log in - click user first, then enter password."""
+    # Click on the username (press Enter to select the shown user)
+    m.send_key("ret")
+    m.sleep(3)
+    # Now type the password
+    m.send_chars(password)
+    m.send_key("ret")
+    m.sleep(15)
 
 def open_terminal(m):
     """Open a terminal."""
     m.send_key("super")
+    m.sleep(3)
+    m.send_chars("terminal")
     m.sleep(2)
-    m.send_chars("terminal\n")
+    m.send_key("ret")
     m.sleep(5)
 
 def run_command_in_terminal(m, cmd):
     """Type a command in the terminal."""
-    m.send_chars(f"{cmd}\n")
+    m.send_chars(cmd)
+    m.send_key("ret")
     m.sleep(2)
 
 # Boot and wait for login
 wait_for_login_screen(machine)
 
-# Login (username is already selected, just need password)
-login(machine, "username", "password")
+# Login
+login(machine, "password")
 
-# Wait for desktop
-machine.sleep(15)
+# Wait for desktop to fully load
+machine.sleep(10)
 
 # Open terminal
 open_terminal(machine)
