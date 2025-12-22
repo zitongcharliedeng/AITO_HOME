@@ -11,6 +11,8 @@
       pkgs = nixpkgs.legacyPackages.${system};
       lib = nixpkgs.lib;
 
+      hardwareConfigs = lib.filterAttrs (n: _: lib.hasSuffix ".nix" n) (builtins.readDir ./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_);
+
       approvalTestDirs = lib.filterAttrs (_: type: type == "directory") (builtins.readDir ./approval_tests);
 
       approvalTests = lib.mapAttrs (name: _:
@@ -18,6 +20,18 @@
       ) approvalTestDirs;
     in
     {
+      nixosConfigurations = lib.mapAttrs' (file: _: {
+        name = lib.removeSuffix ".nix" file;
+        value = lib.nixosSystem {
+          inherit system;
+          modules = [
+            (./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_ + "/${file}")
+            ./flake_modules/USE_SOFTWARE_CONFIG
+            { nixpkgs.config.allowUnfree = true; }
+          ];
+        };
+      }) hardwareConfigs;
+
       checks.${system} = approvalTests;
 
       packages.${system}.ALL_SCREENSHOTS = pkgs.runCommand "all-screenshots" {} ''
