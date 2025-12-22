@@ -46,6 +46,9 @@ login(machine, "password")
 # Wait for desktop to fully load
 wait_for_desktop(machine)
 
+# Debug: take screenshot after desktop loads
+machine.screenshot("debug_after_login")
+
 # Open terminal
 open_terminal(machine)
 
