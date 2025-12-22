@@ -2,13 +2,17 @@
 
 let
   niriConfig = pkgs.writeText "config.kdl" ''
+    spawn-at-startup "${pkgs.ghostty}/bin/ghostty"
+
+    debug {
+      disable-direct-scanout
+      disable-cursor-plane
+    }
+
     window-rule {
       match app-id="com.mitchellh.ghostty"
       default-column-width { proportion 0.5; }
     }
-  '';
-  ghosttyWrapper = pkgs.writeShellScript "ghostty-start" ''
-    exec ${pkgs.ghostty}/bin/ghostty
   '';
 in
 {
@@ -26,20 +30,8 @@ in
   services.greetd = {
     enable = true;
     settings.default_session = {
-      command = "${pkgs.tuigreet}/bin/tuigreet --cmd niri-session";
+      command = "${pkgs.tuigreet}/bin/tuigreet --cmd 'niri --session'";
       user = "greeter";
-    };
-  };
-
-  systemd.user.services.ghostty = {
-    description = "Ghostty terminal";
-    after = [ "graphical-session.target" ];
-    partOf = [ "graphical-session.target" ];
-    wantedBy = [ "graphical-session.target" ];
-    serviceConfig = {
-      ExecStart = ghosttyWrapper;
-      Restart = "on-failure";
-      RestartSec = 1;
     };
   };
 
