@@ -1,26 +1,23 @@
 { pkgs, ... }:
 
 {
-  programs.sway = {
-    enable = true;
-    extraPackages = [ pkgs.ghostty ];
-    extraSessionCommands = ''
-      export XDG_CURRENT_DESKTOP=sway
-    '';
-  };
+  programs.niri.enable = true;
 
   services.greetd = {
     enable = true;
     settings.default_session = {
-      command = "${pkgs.tuigreet}/bin/tuigreet --cmd sway";
+      command = "${pkgs.tuigreet}/bin/tuigreet --cmd niri-session";
       user = "greeter";
     };
   };
 
-  environment.etc."sway/config.d/aito.conf".text = ''
-    exec swaymsg bar mode invisible
-    exec ${pkgs.ghostty}/bin/ghostty
-    for_window [app_id="com.mitchellh.ghostty"] floating enable, resize set width 50 ppt height 100 ppt, move position 0 0
+  environment.etc."niri/config.kdl".text = ''
+    spawn-at-startup "${pkgs.ghostty}/bin/ghostty"
+
+    window-rule {
+      match app-id="com.mitchellh.ghostty"
+      default-column-width { proportion 0.5; }
+    }
   '';
 
   environment.systemPackages = [ pkgs.git ];
