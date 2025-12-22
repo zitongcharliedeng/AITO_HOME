@@ -13,24 +13,27 @@
 
       hardwareConfigs = lib.filterAttrs (n: _: lib.hasSuffix ".nix" n) (builtins.readDir ./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_);
 
+      machineModules = lib.mapAttrs' (file: _: {
+        name = lib.removeSuffix ".nix" file;
+        value = [
+          (./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_ + "/${file}")
+          ./flake_modules/USE_SOFTWARE_CONFIG
+        ];
+      }) hardwareConfigs;
+
       approvalTestDirs = lib.filterAttrs (_: type: type == "directory") (builtins.readDir ./approval_tests);
 
       approvalTests = lib.mapAttrs (name: _:
-        import ./approval_tests/${name} { inherit pkgs; }
+        import ./approval_tests/${name} { inherit pkgs machineModules; }
       ) approvalTestDirs;
     in
     {
-      nixosConfigurations = lib.mapAttrs' (file: _: {
-        name = lib.removeSuffix ".nix" file;
-        value = lib.nixosSystem {
+      nixosConfigurations = lib.mapAttrs (name: modules:
+        lib.nixosSystem {
           inherit system;
-          modules = [
-            (./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_ + "/${file}")
-            ./flake_modules/USE_SOFTWARE_CONFIG
-            { nixpkgs.config.allowUnfree = true; }
-          ];
-        };
-      }) hardwareConfigs;
+          modules = modules ++ [ { nixpkgs.config.allowUnfree = true; } ];
+        }
+      ) machineModules;
 
       checks.${system} = approvalTests;
 
