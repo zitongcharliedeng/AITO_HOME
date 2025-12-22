@@ -7,6 +7,11 @@
     extraSessionCommands = ''
       export XDG_CURRENT_DESKTOP=sway
     '';
+    extraConfig = ''
+      bar swaybar_command true
+      exec ${pkgs.ghostty}/bin/ghostty
+      for_window [app_id="com.mitchellh.ghostty"] floating enable, resize set width 50 ppt height 100 ppt, move position 0 0
+    '';
   };
 
   services.greetd = {
@@ -17,17 +22,11 @@
     };
   };
 
-  environment.etc."sway/config.d/aito.conf".text = ''
-    bar swaybar_command true
-    exec ${pkgs.ghostty}/bin/ghostty
-    for_window [app_id="com.mitchellh.ghostty"] floating enable, resize set width 50 ppt height 100 ppt, move position 0 0
-  '';
-
   environment.systemPackages = [ pkgs.git ];
 
-  programs.bash.promptInit = ''
+  programs.bash.interactiveShellInit = ''
     __git_ps1() {
-      local branch=$(git branch 2>/dev/null | grep '^*' | sed 's/* //')
+      local branch=$(${pkgs.git}/bin/git branch 2>/dev/null | grep '^*' | sed 's/* //')
       [ -n "$branch" ] && echo " ($branch)"
     }
     PS1='[\u@\h:\w$(__git_ps1)]\$ '
