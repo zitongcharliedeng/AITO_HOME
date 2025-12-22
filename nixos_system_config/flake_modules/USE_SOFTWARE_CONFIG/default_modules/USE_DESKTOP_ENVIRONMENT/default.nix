@@ -11,6 +11,8 @@ let
   '';
 in
 {
+  hardware.graphics.enable = true;
+
   programs.niri.enable = true;
 
   services.greetd = {
