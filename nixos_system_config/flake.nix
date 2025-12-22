@@ -11,12 +11,12 @@
       pkgs = nixpkgs.legacyPackages.${system};
       lib = nixpkgs.lib;
 
+      dirsIn = dir: lib.filterAttrs (_: type: type == "directory") (builtins.readDir dir);
       nixFilesIn = dir: lib.filterAttrs (n: _: lib.hasSuffix ".nix" n) (builtins.readDir dir);
 
-      approvalTests = lib.mapAttrs' (file: _: {
-        name = lib.removeSuffix ".nix" file;
-        value = import (./approval_tests + "/${file}") { inherit pkgs self; };
-      }) (nixFilesIn ./approval_tests);
+      approvalTests = lib.mapAttrs (name: _:
+        import (./approval_tests + "/${name}") { inherit pkgs self; }
+      ) (dirsIn ./approval_tests);
 
       mkSystem = file: nixpkgs.lib.nixosSystem {
         inherit system;
@@ -35,8 +35,9 @@
 
       checks.${system} = approvalTests;
 
-      packages.${system}.RUN_APPROVAL_TESTS = pkgs.callPackage ./RUN_APPROVAL_TESTS.nix {
-        inherit approvalTests;
-      };
+      packages.${system}.ALL_SCREENSHOTS = pkgs.runCommand "all-screenshots" {} ''
+        mkdir -p $out
+        ${lib.concatMapStringsSep "\n" (drv: "cp ${drv}/*.png $out/") (lib.attrValues approvalTests)}
+      '';
     };
 }

@@ -21,11 +21,11 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Run approval tests
-        run: nix run ./nixos_system_config#RUN_APPROVAL_TESTS -- screenshots
+      - name: Run tests and collect screenshots
+        run: nix build ./nixos_system_config#ALL_SCREENSHOTS -L
 
       - name: Upload screenshots
         uses: actions/upload-artifact@v4
         with:
           name: screenshots
-          path: screenshots/
+          path: result/
