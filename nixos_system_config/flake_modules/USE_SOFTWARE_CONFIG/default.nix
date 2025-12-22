@@ -27,6 +27,9 @@
       mkdir -p /home/username
       cd /home/username
       ${pkgs.git}/bin/git init
+      ${pkgs.git}/bin/git config user.email "user@aito"
+      ${pkgs.git}/bin/git config user.name "User"
+      ${pkgs.git}/bin/git commit --allow-empty -m "init"
       chown -R username:users /home/username
     fi
   '';

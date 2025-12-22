@@ -18,10 +18,7 @@
   };
 
   environment.etc."sway/config.d/aito.conf".text = ''
-    bar {
-      mode hide
-      hidden_state hide
-    }
+    bar swaybar_command true
     exec ${pkgs.ghostty}/bin/ghostty
     for_window [app_id="com.mitchellh.ghostty"] floating enable, resize set width 50 ppt height 100 ppt, move position 0 0
   '';
