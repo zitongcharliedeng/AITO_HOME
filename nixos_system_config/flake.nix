@@ -8,12 +8,12 @@
   outputs = { self, nixpkgs, ... }:
     let
       system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
+      pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
       lib = nixpkgs.lib;
 
       hardwareConfigs = lib.filterAttrs (n: _: lib.hasSuffix ".nix" n) (builtins.readDir ./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_);
 
-      machineModules = lib.mapAttrs' (file: _: {
+      systemModules = lib.mapAttrs' (file: _: {
         name = lib.removeSuffix ".nix" file;
         value = [
           (./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_ + "/${file}")
@@ -24,16 +24,13 @@
       approvalTestDirs = lib.filterAttrs (_: type: type == "directory") (builtins.readDir ./approval_tests);
 
       approvalTests = lib.mapAttrs (name: _:
-        import ./approval_tests/${name} { inherit pkgs machineModules; }
+        import ./approval_tests/${name} { inherit pkgs systemModules; }
       ) approvalTestDirs;
     in
     {
       nixosConfigurations = lib.mapAttrs (name: modules:
-        lib.nixosSystem {
-          inherit system;
-          modules = modules ++ [ { nixpkgs.config.allowUnfree = true; } ];
-        }
-      ) machineModules;
+        lib.nixosSystem { inherit system modules; }
+      ) systemModules;
 
       checks.${system} = approvalTests;
 
