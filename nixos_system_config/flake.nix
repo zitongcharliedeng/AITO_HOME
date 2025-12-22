@@ -11,11 +11,12 @@
       pkgs = nixpkgs.legacyPackages.${system};
       lib = nixpkgs.lib;
 
-      machineFiles = lib.filterAttrs (n: _: lib.hasSuffix ".nix" n)
-        (builtins.readDir ./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_);
+      nixFilesIn = dir: lib.filterAttrs (n: _: lib.hasSuffix ".nix" n) (builtins.readDir dir);
 
-      approvalTestFiles = lib.filterAttrs (n: _: lib.hasSuffix ".nix" n)
-        (builtins.readDir ./approval_tests);
+      approvalTests = lib.mapAttrs' (file: _: {
+        name = lib.removeSuffix ".nix" file;
+        value = import (./approval_tests + "/${file}") { inherit pkgs self; };
+      }) (nixFilesIn ./approval_tests);
 
       mkSystem = file: nixpkgs.lib.nixosSystem {
         inherit system;
@@ -30,11 +31,12 @@
       nixosConfigurations = lib.mapAttrs' (file: _: {
         name = lib.removeSuffix ".nix" file;
         value = mkSystem file;
-      }) machineFiles;
+      }) (nixFilesIn ./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_);
 
-      checks.${system} = lib.mapAttrs' (file: _: {
-        name = lib.removeSuffix ".nix" file;
-        value = import (./approval_tests + "/${file}") { inherit pkgs self; };
-      }) approvalTestFiles;
+      checks.${system} = approvalTests;
+
+      packages.${system}.RUN_APPROVAL_TESTS = pkgs.callPackage ./RUN_APPROVAL_TESTS.nix {
+        inherit approvalTests;
+      };
     };
 }

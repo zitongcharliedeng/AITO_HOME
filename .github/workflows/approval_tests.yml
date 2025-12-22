@@ -22,19 +22,10 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: Run approval tests
-        run: |
-          cd nixos_system_config
-          mkdir -p screenshots
-          for check in $(nix flake show --json 2>/dev/null | jq -r '.checks."x86_64-linux" | keys[]'); do
-            echo "Building check: $check"
-            nix build .#checks.x86_64-linux.$check -L --out-link result-$check
-            cp -r result-$check/*.png screenshots/ 2>/dev/null || true
-          done
+        run: nix run ./nixos_system_config#RUN_APPROVAL_TESTS -- screenshots
 
       - name: Upload screenshots
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: screenshots
-          path: nixos_system_config/screenshots/
-          if-no-files-found: warn
+          path: screenshots/
