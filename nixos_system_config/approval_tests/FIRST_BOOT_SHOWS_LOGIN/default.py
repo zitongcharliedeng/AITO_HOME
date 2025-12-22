@@ -1,3 +1,3 @@
 machine.wait_for_unit("display-manager.service")
-import time; time.sleep(5)
+machine.wait_for_window("gdm")
 machine.screenshot("user_sees_login_prompt")
