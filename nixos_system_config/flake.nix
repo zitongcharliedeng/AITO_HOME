@@ -36,8 +36,10 @@
       checks.${system} = approvalTests;
 
       packages.${system}.ALL_SCREENSHOTS = pkgs.runCommand "all-screenshots" {} ''
-        mkdir -p $out
-        ${lib.concatMapStringsSep "\n" (drv: "cp ${drv}/*.png $out/") (lib.attrValues approvalTests)}
+        ${lib.concatStringsSep "\n" (lib.mapAttrsToList (name: drv: ''
+          mkdir -p $out/${name}
+          cp ${drv}/*.png $out/${name}/
+        '') approvalTests)}
       '';
     };
 }
