@@ -11,22 +11,13 @@
       pkgs = nixpkgs.legacyPackages.${system};
       lib = nixpkgs.lib;
 
-      approvalTests = {
-        FIRST_BOOT_SHOWS_LOGIN = import ./approval_tests/FIRST_BOOT_SHOWS_LOGIN { inherit pkgs; };
-      };
+      approvalTestDirs = lib.filterAttrs (_: type: type == "directory") (builtins.readDir ./approval_tests);
+
+      approvalTests = lib.mapAttrs (name: _:
+        import ./approval_tests/${name} { inherit pkgs; }
+      ) approvalTestDirs;
     in
     {
-      nixosConfigurations = {
-        TEST_VM = lib.nixosSystem {
-          inherit system;
-          modules = [
-            ./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_/TEST_VM.nix
-            ./flake_modules/USE_SOFTWARE_CONFIG
-            { nixpkgs.config.allowUnfree = true; }
-          ];
-        };
-      };
-
       checks.${system} = approvalTests;
 
       packages.${system}.ALL_SCREENSHOTS = pkgs.runCommand "all-screenshots" {} ''
