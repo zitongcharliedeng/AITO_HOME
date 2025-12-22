@@ -36,18 +36,6 @@ The test should simply: boot → login → screenshot. If the system is correct,
 
 **Don't assemble things yourself.** Use existing well-maintained NixOS modules. If brightness/bluetooth/etc needs to work, find a module that handles it - don't cobble together services manually.
 
-## The Desktop Vision
-
-**Minimal, not full desktop environment.**
-
-- **Hardware controls bar (top)** - brightness, bluetooth, volume, wifi, battery, auto-rotation. Uses existing well-maintained module (GNOME top bar, COSMIC bar, or similar). This is the "hardware controls shell" - services + top bar UI only.
-- **Terminal pinned left 50%** - immovable, unclosable, always visible. Like it's built into the background.
-- **Right 50% empty** - for future use (browser, etc.)
-- **No shortcuts by default** - the terminal is just THERE
-- **No windows, no workspaces, no app launcher, no welcome dialogs**
-
-The system is a terminal with hardware controls. That's it.
-
 ## Approval Testing Philosophy
 
 **Test human-perceivable output.** The system is a visual desktop. Test what humans experience - screens, sounds, structured responses. Black box approach.
