@@ -1,5 +1,15 @@
 { pkgs, ... }:
 
+let
+  niriConfig = pkgs.writeText "config.kdl" ''
+    spawn-at-startup "${pkgs.ghostty}/bin/ghostty"
+
+    window-rule {
+      match app-id="com.mitchellh.ghostty"
+      default-column-width { proportion 0.5; }
+    }
+  '';
+in
 {
   programs.niri.enable = true;
 
@@ -11,13 +21,10 @@
     };
   };
 
-  environment.etc."niri/config.kdl".text = ''
-    spawn-at-startup "${pkgs.ghostty}/bin/ghostty"
-
-    window-rule {
-      match app-id="com.mitchellh.ghostty"
-      default-column-width { proportion 0.5; }
-    }
+  system.activationScripts.niriConfig = ''
+    mkdir -p /home/username/.config/niri
+    cp ${niriConfig} /home/username/.config/niri/config.kdl
+    chown -R username:users /home/username/.config
   '';
 
   environment.systemPackages = [ pkgs.git ];
