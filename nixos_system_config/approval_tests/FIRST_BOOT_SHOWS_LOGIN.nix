@@ -1,13 +1,13 @@
-{ pkgs, ... }:
+{ pkgs, self }:
 
 pkgs.testers.runNixOSTest {
   name = "first-boot-shows-login";
 
   nodes.machine = { ... }: {
-    imports = [ ../flake_modules/USE_SOFTWARE_CONFIG ];
+    # Import the SAME modules used by real machines
+    imports = self.softwareModules;
 
-    users.mutableUsers = false;
-
+    # VM-specific: filesystem for virtual disk
     fileSystems."/" = {
       device = "/dev/vda1";
       fsType = "ext4";
