@@ -28,13 +28,17 @@ in
 
   programs.niri.enable = true;
 
+  services.seatd.enable = true;
+
   services.greetd = {
     enable = true;
     settings.default_session = {
-      command = "${pkgs.tuigreet}/bin/tuigreet --cmd niri";
+      command = "${pkgs.greetd.tuigreet}/bin/tuigreet --greeting 'Authenticate into AITO' --cmd niri";
       user = "greeter";
     };
   };
+
+  users.users.greeter.extraGroups = [ "video" "seat" ];
 
   system.activationScripts.niriConfig = ''
     mkdir -p /home/username/.config/niri
