@@ -4,6 +4,9 @@
   programs.sway = {
     enable = true;
     extraPackages = [ pkgs.ghostty ];
+    extraSessionCommands = ''
+      export XDG_CURRENT_DESKTOP=sway
+    '';
   };
 
   services.greetd = {
@@ -14,12 +17,12 @@
     };
   };
 
-  environment.etc."sway/config".text = ''
+  environment.etc."sway/config.d/aito.conf".text = ''
     bar {
       mode invisible
     }
-    exec ghostty
-    for_window [app_id="ghostty"] resize set width 50 ppt
+    exec ${pkgs.ghostty}/bin/ghostty
+    for_window [app_id="com.mitchellh.ghostty"] resize set width 50 ppt
   '';
 
   environment.systemPackages = [ pkgs.git ];
