@@ -5,13 +5,17 @@ def wait_for_login_screen(m):
 
 def wait_for_desktop(m):
     """Wait until the GNOME desktop is ready after login."""
-    # Wait for gnome-shell running as UID 1000 (the user, not gdm)
-    # GDM's gnome-shell runs as gdm user, user session runs as UID 1000
+    # Wait for user session to be graphical and active via loginctl
     m.wait_until_succeeds(
-        "pgrep -u 1000 gnome-shell",
+        "loginctl show-user username -p State | grep -q active",
         timeout=120
     )
-    m.sleep(15)  # Give desktop time to fully render
+    # Also ensure gnome-shell is running as the user
+    m.wait_until_succeeds(
+        "pgrep -u 1000 gnome-shell",
+        timeout=30
+    )
+    m.sleep(20)  # Give desktop time to fully render after session switch
 
 def login(m, password):
     """Log in - click user first, then enter password."""
