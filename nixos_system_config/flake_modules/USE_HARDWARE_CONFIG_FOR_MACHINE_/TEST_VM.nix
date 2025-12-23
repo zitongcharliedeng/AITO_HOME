@@ -25,11 +25,14 @@ in
 
   boot.loader.grub.device = "/dev/vda";
 
+  boot.kernelModules = [ "vkms" ];
+
   environment.systemPackages = [ pkgs.grim ];
 
   environment.variables = {
     RUST_LOG = "debug,niri=debug,smithay=debug";
     LIBGL_ALWAYS_SOFTWARE = "1";
+    MESA_LOADER_DRIVER_OVERRIDE = "swrast";
   };
 
   system.activationScripts.niriConfig = pkgs.lib.mkForce ''
