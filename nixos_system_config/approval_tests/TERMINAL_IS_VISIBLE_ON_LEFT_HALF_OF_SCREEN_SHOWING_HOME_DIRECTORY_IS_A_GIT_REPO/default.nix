@@ -4,8 +4,7 @@ pkgs.testers.runNixOSTest {
   name = "TERMINAL_IS_VISIBLE_ON_LEFT_HALF_OF_SCREEN_SHOWING_HOME_DIRECTORY_IS_A_GIT_REPO";
   nodes.machine = {
     imports = systemModules.TEST_VM;
-    virtualisation.graphics = true;
-    virtualisation.qemu.options = [ "-vga virtio" ];
+    virtualisation.qemu.options = [ "-vga none -device virtio-gpu-pci" ];
     virtualisation.memorySize = 2048;
   };
   testScript = builtins.readFile ./default.py;
