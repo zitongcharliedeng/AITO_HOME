@@ -25,6 +25,8 @@ in
 
   boot.loader.grub.device = "/dev/vda";
 
+  environment.systemPackages = [ pkgs.grim ];
+
   environment.variables = {
     RUST_LOG = "debug,niri=debug,smithay=debug";
     LIBGL_ALWAYS_SOFTWARE = "1";
