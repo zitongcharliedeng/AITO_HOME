@@ -7,6 +7,7 @@ let
     debug {
       disable-direct-scanout
       disable-cursor-plane
+      render-drm-device "/dev/dri/renderD128"
     }
 
     window-rule {
@@ -17,6 +18,9 @@ let
 in
 {
   imports = [ (modulesPath + "/profiles/qemu-guest.nix") ];
+
+  # Enable hardware graphics for Mesa/EGL support (required by niri)
+  hardware.graphics.enable = true;
 
   fileSystems."/" = {
     device = "/dev/vda1";
