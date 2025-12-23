@@ -25,6 +25,8 @@ in
 
   boot.loader.grub.device = "/dev/vda";
 
+  environment.variables.RUST_LOG = "debug,niri=debug,smithay=debug";
+
   system.activationScripts.niriConfig = pkgs.lib.mkForce ''
     mkdir -p /home/username/.config/niri
     cp -f ${vmNiriConfig} /home/username/.config/niri/config.kdl
