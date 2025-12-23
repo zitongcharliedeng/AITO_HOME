@@ -56,12 +56,20 @@ def wayland_screenshot(m, name, *, uid=1000):
     debug_display_state(m)
     socket = find_wayland_socket(m, uid)
     if socket:
-        m.log(f"Using Wayland socket: {socket}")
-        m.succeed(f"su - username -c 'XDG_RUNTIME_DIR=/run/user/{uid} WAYLAND_DISPLAY={socket} grim /tmp/{name}.png'")
-        m.copy_from_vm(f"/tmp/{name}.png", name)
+        m.log(f"Attempting grim screenshot via Wayland socket: {socket}")
+        grim_cmd = f"su - username -c 'XDG_RUNTIME_DIR=/run/user/{uid} WAYLAND_DISPLAY={socket} grim /tmp/{name}.png'"
+        result = m.execute(grim_cmd)
+        if result[0] == 0:
+            m.log("grim screenshot successful")
+            m.copy_from_vm(f"/tmp/{name}.png", name)
+            return
+        else:
+            m.log(f"grim failed (exit {result[0]}): {result[1]}")
+            m.log("Falling back to QEMU screendump")
     else:
-        m.log("No Wayland socket found, falling back to screendump")
-        m.screenshot(name)
+        m.log("No Wayland socket found")
+    # Fallback to QEMU screendump
+    m.screenshot(name)
 
 wait_for_login_screen(machine)
 login(machine, username="username", password="password")
