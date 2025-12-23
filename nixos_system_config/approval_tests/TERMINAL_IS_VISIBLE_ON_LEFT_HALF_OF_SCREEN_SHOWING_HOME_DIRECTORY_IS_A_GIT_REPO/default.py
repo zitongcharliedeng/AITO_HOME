@@ -12,11 +12,30 @@ def login(m, *, username, password):
     m.send_key("ret")
 
 def debug_display_state(m):
-    m.succeed("echo '=== DRM devices ===' && ls -la /dev/dri/ || echo 'No DRI devices'")
-    m.succeed("echo '=== Niri process ===' && pgrep -a niri || echo 'Niri not running'")
-    m.succeed("echo '=== User runtime dir ===' && ls -la /run/user/1000/ || echo 'No runtime dir'")
-    m.succeed("echo '=== Wayland sockets ===' && ls -la /run/user/1000/wayland* 2>/dev/null || echo 'No wayland sockets'")
-    m.succeed("echo '=== Journal niri ===' && journalctl -u greetd --no-pager -n 50 || echo 'No greetd logs'")
+    # Capture and log output for debugging
+    output = m.succeed("ls -la /dev/dri/ 2>&1 || echo 'No DRI devices'")
+    m.log(f"=== DRM devices ===\n{output}")
+
+    output = m.succeed("pgrep -a niri 2>&1 || echo 'Niri not running'")
+    m.log(f"=== Niri process ===\n{output}")
+
+    output = m.succeed("ls -la /run/user/1000/ 2>&1 || echo 'No runtime dir'")
+    m.log(f"=== User runtime dir ===\n{output}")
+
+    output = m.succeed("ls -la /run/user/1000/wayland* 2>&1 || echo 'No wayland sockets'")
+    m.log(f"=== Wayland sockets ===\n{output}")
+
+    # Get niri's actual error logs from journalctl
+    output = m.succeed("journalctl -u greetd --no-pager -n 100 2>&1 || echo 'No greetd logs'")
+    m.log(f"=== Journal greetd ===\n{output}")
+
+    # Also check user's niri logs
+    output = m.succeed("journalctl --user -u niri --no-pager -n 100 2>&1 || echo 'No niri user logs'")
+    m.log(f"=== Journal niri user ===\n{output}")
+
+    # Check for EGL/Mesa errors
+    output = m.succeed("dmesg | grep -iE 'drm|egl|mesa|niri|gpu' | tail -50 2>&1 || echo 'No relevant dmesg'")
+    m.log(f"=== dmesg DRM/EGL ===\n{output}")
 
 def wayland_screenshot(m, name, *, uid=1000):
     debug_display_state(m)

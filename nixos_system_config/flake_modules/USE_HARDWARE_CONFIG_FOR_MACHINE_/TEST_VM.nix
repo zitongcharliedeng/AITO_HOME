@@ -29,10 +29,22 @@ in
 
   environment.systemPackages = [ pkgs.grim ];
 
+  # Mesa software rendering environment - must match production config
   environment.variables = {
-    RUST_LOG = "debug,niri=debug,smithay=debug";
     LIBGL_ALWAYS_SOFTWARE = "1";
-    MESA_LOADER_DRIVER_OVERRIDE = "swrast";
+    GALLIUM_DRIVER = "llvmpipe";
+    __GLX_VENDOR_LIBRARY_NAME = "mesa";
+    MESA_GL_VERSION_OVERRIDE = "4.5";
+    # Debug logging
+    RUST_LOG = "debug,niri=debug,smithay=debug";
+  };
+
+  # Ensure greetd also has these variables
+  systemd.services.greetd.environment = {
+    LIBGL_ALWAYS_SOFTWARE = "1";
+    GALLIUM_DRIVER = "llvmpipe";
+    __GLX_VENDOR_LIBRARY_NAME = "mesa";
+    MESA_GL_VERSION_OVERRIDE = "4.5";
   };
 
   system.activationScripts.niriConfig = pkgs.lib.mkForce ''
