@@ -74,4 +74,4 @@ def wayland_screenshot(m, name, *, uid=1000):
 wait_for_login_screen(machine)
 login(machine, username="username", password="password")
 wait_for_desktop(machine)
-wayland_screenshot(machine, "terminal_visible_on_left_half_with_git_repo")
+wayland_screenshot(machine, "niri_starts_after_login")

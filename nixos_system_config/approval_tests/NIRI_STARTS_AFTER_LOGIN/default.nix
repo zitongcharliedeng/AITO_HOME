@@ -1,7 +1,7 @@
 { pkgs, systemModules }:
 
 pkgs.testers.runNixOSTest {
-  name = "TERMINAL_IS_VISIBLE_ON_LEFT_HALF_OF_SCREEN_SHOWING_HOME_DIRECTORY_IS_A_GIT_REPO";
+  name = "NIRI_STARTS_AFTER_LOGIN";
   nodes.machine = {
     imports = systemModules.TEST_VM;
     # virtio-gpu-pci provides DRM device for niri (software rendering in guest)
