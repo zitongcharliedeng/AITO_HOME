@@ -38,24 +38,17 @@ def debug_display_state(m):
     m.log(f"=== dmesg DRM/EGL ===\n{output}")
 
 def find_wayland_socket(m, uid=1000):
-    """Find niri's Wayland socket dynamically.
+    """Find Wayland socket dynamically.
 
-    Niri creates sockets like: niri.wayland-1.PID.sock
+    Niri creates: wayland-1 (standard) and niri.wayland-1.PID.sock (internal)
     Standard compositors use: wayland-0
     """
-    # Check for standard wayland-0 first
-    result = m.execute(f"test -S /run/user/{uid}/wayland-0")
-    if result[0] == 0:
-        return "wayland-0"
-
-    # Look for niri's socket pattern
-    result = m.execute(f"ls /run/user/{uid}/niri.wayland-*.sock 2>/dev/null | head -1")
-    if result[0] == 0 and result[1].strip():
-        socket_path = result[1].strip()
-        # Extract just the socket name without path and .sock extension
-        socket_name = socket_path.split('/')[-1].replace('.sock', '')
-        m.log(f"Found niri socket: {socket_name}")
-        return socket_name
+    # Check for standard wayland sockets (wayland-0, wayland-1, etc.)
+    for i in range(10):
+        result = m.execute(f"test -S /run/user/{uid}/wayland-{i}")
+        if result[0] == 0:
+            m.log(f"Found standard Wayland socket: wayland-{i}")
+            return f"wayland-{i}"
 
     return None
 
