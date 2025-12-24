@@ -94,6 +94,26 @@ nix build .#checks.x86_64-linux.TEST_NAME
 ```
 Don't wait for GitHub Actions when you can iterate locally.
 
+## Development Workflow
+
+**Enter the devShell before doing any work.** This is mandatory.
+
+```
+cd ~/nixos_system_config
+nix develop
+```
+
+This automatically:
+- Installs git pre-commit hooks that run `nix flake check`
+- Blocks commits until all tests pass
+- Provides all development dependencies
+
+**If you're using direnv**, add `use flake` to `.envrc` and it auto-activates.
+
+**Pre-commit hooks block bad commits.** Every commit runs the full test suite. If tests fail, commit is rejected. No broken code enters the repo.
+
+**CI runs on PRs.** GitHub Actions runs approval tests and auto-commits updated goldens to the PR branch. PRs cannot merge until checks pass.
+
 ## First Time Setup
 
 1. Download the NixOS graphical installer ISO
