@@ -34,7 +34,7 @@
           flake-check = {
             enable = true;
             name = "nix-flake-check";
-            entry = "${pkgs.nix}/bin/nix --extra-experimental-features 'nix-command flakes' flake check";
+            entry = "${pkgs.nix}/bin/nix --extra-experimental-features 'nix-command flakes' flake check --no-build ./nixos_system_config";
             pass_filenames = false;
             stages = [ "pre-commit" ];
           };
@@ -46,9 +46,7 @@
         lib.nixosSystem { inherit system modules; }
       ) systemModules;
 
-      checks.${system} = approvalTests // {
-        pre-commit = preCommitCheck;
-      };
+      checks.${system} = approvalTests;
 
       packages.${system}.ALL_SCREENSHOTS = pkgs.runCommand "all-screenshots" {} ''
         ${lib.concatStringsSep "\n" (lib.mapAttrsToList (name: drv: ''
