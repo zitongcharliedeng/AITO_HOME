@@ -3,9 +3,10 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
   };
 
-  outputs = { self, nixpkgs, ... }:
+  outputs = { self, nixpkgs, pre-commit-hooks, ... }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
@@ -26,13 +27,28 @@
       approvalTests = lib.mapAttrs (name: _:
         import ./approval_tests/${name} { inherit pkgs systemModules; }
       ) approvalTestDirs;
+
+      preCommitCheck = pre-commit-hooks.lib.${system}.run {
+        src = ./.;
+        hooks = {
+          flake-check = {
+            enable = true;
+            name = "nix-flake-check";
+            entry = "${pkgs.nix}/bin/nix flake check";
+            pass_filenames = false;
+            stages = [ "pre-commit" ];
+          };
+        };
+      };
     in
     {
       nixosConfigurations = lib.mapAttrs (name: modules:
         lib.nixosSystem { inherit system modules; }
       ) systemModules;
 
-      checks.${system} = approvalTests;
+      checks.${system} = approvalTests // {
+        pre-commit = preCommitCheck;
+      };
 
       packages.${system}.ALL_SCREENSHOTS = pkgs.runCommand "all-screenshots" {} ''
         ${lib.concatStringsSep "\n" (lib.mapAttrsToList (name: drv: ''
@@ -40,5 +56,9 @@
           cp ${drv}/*.png $out/${name}/
         '') approvalTests)}
       '';
+
+      devShells.${system}.default = pkgs.mkShell {
+        inherit (preCommitCheck) shellHook;
+      };
     };
 }
