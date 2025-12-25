@@ -35,6 +35,7 @@ MACHINE_FILE="$MACHINES_DIR/$MACHINE.nix"
 if [[ ! -f "$MACHINE_FILE" ]]; then
     echo "Creating new machine config: $MACHINE"
     nixos-generate-config --show-hardware-config > "$MACHINE_FILE"
+    git add "$MACHINE_FILE"
 fi
 
 sudo nixos-rebuild switch --flake "$SCRIPT_DIR#$MACHINE"
