@@ -36,5 +36,10 @@
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
+  services.openssh = {
+    enable = true;
+    settings.PasswordAuthentication = true;
+  };
+
   system.stateVersion = "24.11";
 }
