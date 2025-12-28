@@ -206,9 +206,152 @@ Morning (as Ito):
 
 ---
 
+## Silicon Cog (The Homelab)
+
+The NixOS homelab IS Silicon Cog - the digital extension of the body.
+
+**Everything lives here:**
+- All photos (migrated from Google Photos)
+- All instant replays
+- All conversation history
+- All project files
+- The webapp
+- The AI agent (Claude Code / PAI)
+
+**Encrypted. Distributed. Owned.**
+
+---
+
+## Webapp ↔ AI Agent Connection
+
+```
+LOCAL (on NixOS machine):
+┌─────────────┐     ┌─────────────┐
+│  Webapp UI  │────▶│ Claude Code │  (same machine)
+│  (browser)  │     │  (terminal) │  (unix socket or direct spawn)
+└─────────────┘     └─────────────┘
+
+REMOTE (phone, library, anywhere):
+┌─────────────┐     ┌─────────────────────────────────────┐
+│   Browser   │────▶│         NixOS Homelab               │
+│  (anywhere) │HTTPS│  ┌─────────┐     ┌─────────────┐   │
+└─────────────┘     │  │ Webapp  │────▶│ Claude Code │   │
+                    │  └─────────┘     └─────────────┘   │
+                    └─────────────────────────────────────┘
+```
+
+**Same UI everywhere. Claude Code only runs locally on homelab.**
+
+---
+
+## Remote Access (Zero Trust)
+
+**Twingate / Tailscale / Cloudflare Tunnel:**
+- No exposed ports
+- Zero trust authentication
+- Access homelab from anywhere
+- Login required (private routes)
+
+```
+Phone in library
+    │
+    │ Twingate / Tailscale
+    ▼
+NixOS Homelab
+    │
+    │ Auth check
+    ▼
+LifeOS Webapp ←→ Claude Code
+```
+
+---
+
+## Project Switching
+
+Each project has its own context:
+
+```
+AITO: "Which project?"
+You: "Working on PAI"
+
+AITO: [loads PAI/.aito/context.md]
+      [reads PAI/AGENTS.md]
+      [conversation saved to PAI/.aito/history/]
+
+You: "Switch to AITO_HOME"
+
+AITO: [loads AITO_HOME/.aito/context.md]
+      [different history, different context]
+```
+
+**Project context is per-repo. Agent adapts.**
+
+---
+
+## Bootstrap Priority
+
+**Phase 1: NixOS Foundation (DO THIS FIRST)**
+1. Get NixOS running (cloud instance initially, no physical homelab yet)
+2. Everything encrypted
+3. Basic webapp running
+4. Claude Code accessible via webapp
+
+**Phase 2: Migrate Data**
+1. Export Google Photos → homelab
+2. Set up backup to B2 (encrypted)
+3. Conversation history storage
+
+**Phase 3: Enforcement**
+1. App restrictions on NixOS
+2. Parental controls on secondary devices
+3. Pavlok integration
+
+**Phase 4: Full LifeOS**
+1. GTD system (superproductivity or custom)
+2. Daily log generation
+3. Graphs and analytics
+
+---
+
+## Cloud vs Physical Homelab
+
+**Initial (no physical homelab):**
+```
+Cloud Instance (DigitalOcean/Hetzner)
+├── NixOS
+├── Encrypted storage
+├── Webapp + Claude Code
+└── Backup to B2
+```
+
+**Eventually (physical homelab):**
+```
+Physical Machine (home)          Cloud Instance (backup)
+├── NixOS                        ├── NixOS (replica)
+├── All data (primary)    ──────▶├── Encrypted sync
+├── Webapp + Claude Code         └── Failover
+└── Backup to B2
+```
+
+**Cloud is temporary scaffolding until physical homelab exists.**
+
+---
+
+## Encryption Requirements
+
+- All data at rest: encrypted (LUKS or similar)
+- All data in transit: HTTPS / Wireguard
+- Backups to B2: encrypted before upload (age/gpg)
+- Credentials: agenix (NixOS-native secrets)
+
+**If the cloud provider is compromised, they see only encrypted blobs.**
+
+---
+
 ## Open Questions
 
 - [ ] Instant replay: where does it fit? OS-level recording, saved to `/var/aito/replays/`?
-- [ ] How does webapp sync with NixOS enforcement? n8n? Direct API?
-- [ ] Phone parental controls: which app? How to give AITO the key?
 - [ ] Superproductivity vs custom GTD in webapp?
+- [ ] Which cloud provider for initial instance? (DigitalOcean? Hetzner?)
+- [ ] Twingate vs Tailscale vs Cloudflare Tunnel for remote access?
+- [ ] How to sync/replicate between cloud and eventual physical homelab?
