@@ -458,6 +458,76 @@ Physical Machine (home)          Cloud Instance (backup)
 
 ---
 
+## Critical Decision: NixOS Frontend vs Web App Frontend
+
+### The Trade-off
+
+| Factor | NixOS Desktop | Web App (any OS host) |
+|--------|---------------|----------------------|
+| **System restrictions** | ✅ Full control - block apps, control WM | ❌ Can only restrict via external tools (Cold Turkey) |
+| **Hardware support** | ❌ Brightness, rotation, etc. often broken | ✅ Host OS handles it natively |
+| **Runs on any device** | ❌ Only NixOS devices | ✅ Anything with a browser |
+| **Offline capability** | ✅ Fully local | ⚠️ PWA can cache, but limited |
+| **Testability** | ✅ NixOS VM screenshot tests | ✅ Browser screenshot tests |
+| **Maintenance** | ❌ Must maintain NixOS configs per device | ✅ One web app, runs anywhere |
+| **PAI/AI hosting** | Runs locally or connects to server | Requires server (can be cloud) |
+
+### What Matters More?
+
+**If RESTRICTIONS matter most:** NixOS Desktop
+- Can block at OS level
+- Can't bypass by opening another app
+- Full control over window manager
+
+**If AVAILABILITY matters most:** Web App
+- Works on any device with browser
+- Hardware just works (host OS handles it)
+- One interface everywhere
+- Lock down host OS externally (Cold Turkey, parental controls)
+
+### The Hybrid Answer
+
+```
+BACKEND (NixOS server - cloud first, then homelab):
+├── Hosts LifeOS web app
+├── Hosts PAI
+├── Stores all data
+└── No hardware issues (server)
+
+FRONTEND (Web app, any device):
+├── Host OS = whatever works (Windows, Ubuntu, macOS)
+├── Host OS locked down (Cold Turkey, Screen Time, etc.)
+├── Browser = only allowed app
+├── Browser fullscreen = LifeOS
+└── Hardware works because host OS supports it
+
+OFFLINE (Buffer mode):
+├── PWA caches the interface
+├── Can capture notes, drawings locally
+├── Syncs when online
+└── PAI not available offline (acceptable?)
+```
+
+### Decision Needed
+
+**Question:** Is "PAI not available offline" acceptable?
+
+- **If YES:** Web app frontend is simpler. Lock down any device. Done.
+- **If NO:** Need local AI capability, which means NixOS (or complex local setup).
+
+### Current Recommendation
+
+**Go Web App frontend.** Reasons:
+1. Hardware just works
+2. Runs anywhere
+3. Lock down via Cold Turkey/parental controls (good enough)
+4. PAI on cloud server (internet is the bottleneck anyway, as you said)
+5. PWA for offline buffer (capture, sync later)
+
+**Accept:** PAI needs internet. That's OK. Internet is already the bottleneck for everything.
+
+---
+
 ## Open Questions
 
 - [ ] Instant replay: where does it fit? OS-level recording, saved to `/var/aito/replays/`?
@@ -465,3 +535,4 @@ Physical Machine (home)          Cloud Instance (backup)
 - [ ] Which cloud provider for initial instance? (DigitalOcean? Hetzner?)
 - [ ] Twingate vs Tailscale vs Cloudflare Tunnel for remote access?
 - [ ] How to sync/replicate between cloud and eventual physical homelab?
+- [ ] Is "PAI not available offline" acceptable? (Affects architecture choice)
