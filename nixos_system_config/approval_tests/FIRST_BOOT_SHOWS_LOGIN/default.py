@@ -1,5 +1,3 @@
-def wait_for_login_screen(m):
-    m.wait_for_text("login")
-
-wait_for_login_screen(machine)
+machine.wait_for_unit("display-manager.service")
+machine.sleep(5)
 machine.screenshot("user_sees_login_prompt")

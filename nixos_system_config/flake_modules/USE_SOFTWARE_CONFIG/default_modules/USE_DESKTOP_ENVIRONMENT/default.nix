@@ -1,52 +1,44 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
-let
-  niriConfig = pkgs.writeText "config.kdl" ''
-    spawn-at-startup "${pkgs.ghostty}/bin/ghostty"
-
-    debug {
-      disable-direct-scanout
-      disable-cursor-plane
-      render-drm-device "/dev/dri/renderD128"
-    }
-
-    window-rule {
-      match app-id="com.mitchellh.ghostty"
-      default-column-width { proportion 0.5; }
-    }
-  '';
-in
 {
+  services.xserver.enable = true;
+  services.xserver.displayManager.gdm.enable = true;
+  services.xserver.desktopManager.gnome.enable = true;
+
+  services.gnome.core-utilities.enable = false;
+
+  environment.gnome.excludePackages = with pkgs; [
+    gnome-tour
+    gnome-initial-setup
+  ];
+
+  programs.dconf = {
+    enable = true;
+    profiles.user.databases = [{
+      settings = {
+        "org/gnome/shell" = {
+          welcome-dialog-last-shown-version = "999.0.0";
+        };
+        "org/gnome/desktop/privacy" = {
+          remember-recent-files = false;
+        };
+        "org/gnome/desktop/session" = {
+          idle-delay = lib.gvariant.mkUint32 0;
+        };
+        "org/gnome/settings-daemon/plugins/power" = {
+          sleep-inactive-ac-type = "nothing";
+        };
+      };
+    }];
+  };
+
   hardware.graphics.enable = true;
 
-  environment.variables = {
-    LIBGL_ALWAYS_SOFTWARE = "1";
-    GALLIUM_DRIVER = "llvmpipe";
-    __GLX_VENDOR_LIBRARY_NAME = "mesa";
-    MESA_GL_VERSION_OVERRIDE = "4.5";
-  };
-
-  programs.niri.enable = true;
-
-  services.seatd.enable = true;
-
-  services.greetd = {
-    enable = true;
-    settings.default_session = {
-      command = "${pkgs.greetd.tuigreet}/bin/tuigreet --greeting 'Authenticate into AITO' --cmd niri";
-      user = "greeter";
-    };
-  };
-
-  users.users.greeter.extraGroups = [ "video" "seat" ];
-
-  system.activationScripts.niriConfig = ''
-    mkdir -p /home/username/.config/niri
-    cp -f ${niriConfig} /home/username/.config/niri/config.kdl
-    chown -R username:users /home/username/.config
-  '';
-
-  environment.systemPackages = [ pkgs.git pkgs.ghostty ];
+  environment.systemPackages = with pkgs; [
+    git
+    gnome-terminal
+    firefox
+  ];
 
   programs.bash.interactiveShellInit = ''
     __update_ps1() {

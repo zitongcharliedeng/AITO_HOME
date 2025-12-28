@@ -1,7 +1,7 @@
 { pkgs, systemModules }:
 
 pkgs.testers.runNixOSTest {
-  name = "FIRST_BOOT_SHOWS_LOGIN";
+  name = "GNOME_DESKTOP_LOADS";
   nodes.machine = {
     imports = systemModules.TEST_VM;
     virtualisation.memorySize = 4096;
