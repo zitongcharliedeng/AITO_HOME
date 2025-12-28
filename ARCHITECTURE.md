@@ -181,75 +181,77 @@ When Ito has conscious time → review backlog → automate next item → expand
 
 ---
 
-## Access Strategy: Local-First, Not Remote Desktop
+## Access Strategy: NixOS Everywhere
 
 ### Options Considered
 
 | Option | Pros | Cons | Decision |
 |--------|------|------|----------|
-| **RustDesk (remote desktop)** | Real apps, no reimplementation | No offline access, depends on internet, accessibility concerns | ❌ Rejected |
-| **PWA-only** | Works anywhere, offline cache | Can't enforce, just a viewer, have to rebuild everything | ❌ Rejected as primary |
-| **Native NixOS + PWA secondary** | Full offline, enforcement, real apps | Phone is limited | ✅ Chosen |
+| **RustDesk (remote desktop)** | Real apps, no reimplementation | No offline access, latency, SPOF | ❌ Rejected |
+| **PWA + NixOS hybrid** | Access from phone | Two systems to maintain, phone can't enforce | ❌ Rejected |
+| **NixOS on all devices** | Same config everywhere, full enforcement, offline works | Need NixOS-compatible devices | ✅ Chosen |
 
 ### Why NOT Remote Desktop (RustDesk)
 
 - **No offline access** - If internet is down, you have nothing
 - **Latency** - Every keystroke over network
-- **Accessibility** - Touch screen, resizing may be janky
 - **Single point of failure** - Homelab down = dead
 
-### Why NOT PWA as Primary
+### Why NOT Phone/PWA
 
 - **No enforcement** - Can just close the tab
-- **Rebuild everything** - Superproductivity, terminal, etc. all need reimplementing
-- **Still needs backend** - PWA alone can't do anything
+- **Two systems** - NixOS + PWA = more complexity
+- **Phone is a leak** - Can't control it declaratively
 
-### The Chosen Architecture: Local-First
+### The Chosen Architecture: NixOS Everywhere
 
-```
-PRIMARY: GPD Pocket 4 (NixOS) - ALWAYS WITH YOU
-├── Full LifeOS running LOCALLY
-├── Works OFFLINE
-├── Superproductivity NATIVE
-├── Terminal NATIVE
-├── Enforcement NATIVE
-└── Syncs to homelab when online
-
-SECONDARY: Phone / Random Computer - LIMITED, THAT'S OK
-├── Webapp (PWA-capable, cached)
-├── Offline: read cached data, queue actions
-├── Online: sync with homelab, view full data
-└── Cannot enforce, just viewing/queueing
-```
-
-### Offline Sync Strategy
+**One flake. Multiple hardware configs. Same software.**
 
 ```
-GPD Pocket 4 (offline)              Homelab
-    │                                  │
-    │ [full functionality locally]     │
-    │                                  │
-    └──── internet available ─────────▶│ bidirectional sync
-                                       │
-Phone (offline)                        │
-    │                                  │
-    │ [cached read-only + action queue]│
-    │                                  │
-    └──── internet available ─────────▶│ push queued actions, pull updates
+AITO_HOME/nixos_system_config/
+├── flake.nix
+└── flake_modules/
+    ├── USE_SOFTWARE_CONFIG/        ← SAME for all devices
+    │   └── (LifeOS, enforcement, apps)
+    │
+    └── USE_HARDWARE_CONFIG_FOR_MACHINE_/
+        ├── GPD_POCKET_4.nix        ← Device-specific
+        ├── DESKTOP.nix
+        ├── LAPTOP.nix
+        └── CLOUD_INSTANCE.nix
 ```
 
-**When offline on GPD:** Everything works. It's the primary device.
-**When offline on phone:** Read cached schedule/tasks, queue actions (like "add task X"). Syncs when online.
+**Every device runs NixOS:**
+- Same software config
+- Same enforcement
+- Same LifeOS interface
+- Works offline
+- Syncs data when online
 
-### When to Use Each
+### Sync Strategy
 
-| Situation | Device | Mode |
-|-----------|--------|------|
-| Normal daily use | GPD Pocket 4 | Full local |
-| Quick check while out | Phone | Webapp (cached) |
-| At library/cafe | GPD Pocket 4 | Full local |
-| Emergency, no GPD | Phone → Homelab | Remote webapp |
-| Gaming PC (Windows) | Browser → Homelab | Webapp view only |
+```
+Device A (NixOS)                Device B (NixOS)
+    │                               │
+    │ [full local functionality]    │ [full local functionality]
+    │                               │
+    └───────── Syncthing ──────────┘
+              (or similar)
+                   │
+                   ▼
+             Homelab/Cloud
+             (backup + sync hub)
+```
+
+**All devices are equal.** No primary/secondary. Whichever you're using IS the primary.
+
+### What About Phone?
+
+**Current:** Keep phone for camera + cellular only. Not part of LifeOS.
+
+**Future:** When Linux phones are viable (PinePhone, or GPD with cellular), replace phone with another NixOS device.
+
+**The phone is not part of the system.** It's a temporary necessity, heavily restricted, not trusted.
 
 ---
 
