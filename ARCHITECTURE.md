@@ -181,6 +181,78 @@ When Ito has conscious time → review backlog → automate next item → expand
 
 ---
 
+## Access Strategy: Local-First, Not Remote Desktop
+
+### Options Considered
+
+| Option | Pros | Cons | Decision |
+|--------|------|------|----------|
+| **RustDesk (remote desktop)** | Real apps, no reimplementation | No offline access, depends on internet, accessibility concerns | ❌ Rejected |
+| **PWA-only** | Works anywhere, offline cache | Can't enforce, just a viewer, have to rebuild everything | ❌ Rejected as primary |
+| **Native NixOS + PWA secondary** | Full offline, enforcement, real apps | Phone is limited | ✅ Chosen |
+
+### Why NOT Remote Desktop (RustDesk)
+
+- **No offline access** - If internet is down, you have nothing
+- **Latency** - Every keystroke over network
+- **Accessibility** - Touch screen, resizing may be janky
+- **Single point of failure** - Homelab down = dead
+
+### Why NOT PWA as Primary
+
+- **No enforcement** - Can just close the tab
+- **Rebuild everything** - Superproductivity, terminal, etc. all need reimplementing
+- **Still needs backend** - PWA alone can't do anything
+
+### The Chosen Architecture: Local-First
+
+```
+PRIMARY: GPD Pocket 4 (NixOS) - ALWAYS WITH YOU
+├── Full LifeOS running LOCALLY
+├── Works OFFLINE
+├── Superproductivity NATIVE
+├── Terminal NATIVE
+├── Enforcement NATIVE
+└── Syncs to homelab when online
+
+SECONDARY: Phone / Random Computer - LIMITED, THAT'S OK
+├── Webapp (PWA-capable, cached)
+├── Offline: read cached data, queue actions
+├── Online: sync with homelab, view full data
+└── Cannot enforce, just viewing/queueing
+```
+
+### Offline Sync Strategy
+
+```
+GPD Pocket 4 (offline)              Homelab
+    │                                  │
+    │ [full functionality locally]     │
+    │                                  │
+    └──── internet available ─────────▶│ bidirectional sync
+                                       │
+Phone (offline)                        │
+    │                                  │
+    │ [cached read-only + action queue]│
+    │                                  │
+    └──── internet available ─────────▶│ push queued actions, pull updates
+```
+
+**When offline on GPD:** Everything works. It's the primary device.
+**When offline on phone:** Read cached schedule/tasks, queue actions (like "add task X"). Syncs when online.
+
+### When to Use Each
+
+| Situation | Device | Mode |
+|-----------|--------|------|
+| Normal daily use | GPD Pocket 4 | Full local |
+| Quick check while out | Phone | Webapp (cached) |
+| At library/cafe | GPD Pocket 4 | Full local |
+| Emergency, no GPD | Phone → Homelab | Remote webapp |
+| Gaming PC (Windows) | Browser → Homelab | Webapp view only |
+
+---
+
 ## Enforcement Hierarchy
 
 1. **Automated enforcement** (NixOS, n8n) - ideal
