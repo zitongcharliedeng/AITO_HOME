@@ -739,3 +739,55 @@ PAI specs become integration tests: "Given this conversation, expect this behavi
 
 **Once step 7 works, the system can improve itself.**
 
+
+---
+
+## Repository Structure (Final)
+
+**Principle:** No submodules. Everything integrated. If it's tied to this system, it lives here.
+
+```
+AITO_HOME/                          # The one repo. Git root.
+│
+├── ARCHITECTURE.md                 # This file. The spec.
+├── AGENTS.md                       # How AI behaves in this repo
+│
+├── NIXOS_CONFIG/                   # NixOS system configuration
+│   ├── flake.nix                   # Entry point
+│   ├── configuration.nix           # Main config
+│   ├── hardware/
+│   │   └── VULTR_VPS.nix          # Hardware-specific
+│   └── tests/                      # NixOS VM tests
+│       ├── system-boots.nix        # "System boots, can login"
+│       └── repo-exists.nix         # "AITO_HOME is at root"
+│
+├── PAI/                            # AI assistant (integrated, not submodule)
+│   ├── AGENTS.md                   # PAI-specific behavior
+│   └── config/                     # PAI configuration
+│
+├── LIFEOS_WEBAPP/                  # Frontend (TypeScript)
+│   ├── src/
+│   ├── tests/                      # Vitest unit tests
+│   └── package.json
+│
+├── UNFINISHED_CONVERSATIONS/       # Archived conversations (cleanup)
+│   └── [date]-[topic].md           # Each conversation as markdown
+│
+└── flake.nix                       # Root flake (imports NIXOS_CONFIG)
+```
+
+### First Test (Bootstrap)
+
+1. `nixos-rebuild switch` succeeds
+2. Can SSH in as root
+3. `ls /` shows AITO_HOME exists (or `/root/AITO_HOME`)
+4. Git repo is clean
+
+**Test command:** `nix flake check` → runs NixOS VM tests
+
+### Live Server
+
+- IP: 66.42.91.14
+- AITO_HOME location: `/root/AITO_HOME` (for now)
+- Eventually: system IS the repo (config deployed from repo)
+
