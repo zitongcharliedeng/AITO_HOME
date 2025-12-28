@@ -134,29 +134,65 @@ AITO_HOME/                      (this repo - git, declarative, rollbackable)
 
 ---
 
-## LifeOS Webapp UI
+## LifeOS: One Interface That IS The Desktop
+
+**Epiphany:** LifeOS is not an app you open. It IS the desktop. Everything else runs inside it or is blocked.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    LIFEOS / DAEMON human 3.0                    │
-├─────────────────────────┬───────────────────────────────────────┤
-│                         │  CHANGELOG                            │
-│      AITO CHAT          │  "carbon cog not brush teeth,         │
-│                         │   ramped shock collar to 150v"        │
-│   "Hi, talk to me"      │                                       │
-│                         │  SCHEDULE (M T W T F S S)             │
-│   Entry point to        │  ┌─────┬─────┬─────┐                  │
-│   convert intentions    │  │Game │Study│Climb│                  │
-│   → deterministic       │  ├─────┼─────┼─────┤                  │
-│   rules via silicon     │  │Eat  │Work │Curry│                  │
-│                         │  └─────┴─────┴─────┘                  │
-│                         │                                       │
-│   [✓] [≡]               │  see graphs ▼                         │
-└─────────────────────────┴───────────────────────────────────────┘
+│                     LIFEOS (the only thing you see)             │
+│                                                                 │
+│   ┌─────────────────┐  ┌─────────────────────────────────────┐ │
+│   │                 │  │                                     │ │
+│   │   AITO CHAT     │  │  RIGHT NOW: "Work on PAI project"   │ │
+│   │                 │  │                                     │ │
+│   │  "Hi, talk      │  │  [Embedded Terminal]                │ │
+│   │   to me"        │  │                                     │ │
+│   │                 │  │  [Superproductivity - embedded]     │ │
+│   │  Entry point    │  │                                     │ │
+│   │  for all        │  │  RESTRICTIONS ACTIVE:               │ │
+│   │  intentions     │  │  • YouTube blocked until 6pm       │ │
+│   │                 │  │  • Games blocked until tasks done   │ │
+│   │                 │  │                                     │ │
+│   └─────────────────┘  └─────────────────────────────────────┘ │
+│                                                                 │
+│   Everything else: launched through this interface, or blocked. │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-**Public view:** Anyone can see schedule, ask AITO about philosophy
-**Private view:** Full control, mutate schedule, discipline Cog
+### Key Principles
+
+1. **One interface** - Single view you look at all day
+2. **Embeds existing tools** - Don't remake superproductivity, embed it
+3. **Context-aware** - Shows right tools at right time
+4. **Enforced** - NixOS blocks what browser can't
+5. **NixOS > Browser** - Browser is limited; NixOS controls the whole system
+
+### Why NixOS, Not Just Browser
+
+| Browser can... | NixOS can... |
+|----------------|--------------|
+| Display UI | Display UI |
+| Run web apps | Run ANY apps |
+| | Block apps at OS level |
+| | Control window manager |
+| | Restrict at system level |
+| | Manage hardware |
+
+**Browser is the interface. NixOS is the enforcer.**
+
+### Don't Rebuild, Embed
+
+- **Superproductivity** → embed web version, don't remake
+- **Terminal** → embed xterm.js or native terminal
+- **Calendar** → embed existing solution
+
+**Future:** AI builds bespoke tools. We're not there yet. Use what exists.
+
+### Public vs Private
+
+**Public daemon site:** Simple webpage, anyone can view schedule, ask AITO about philosophy
+**Private LifeOS:** Full desktop session, embedded tools, enforcement active
 
 ---
 
