@@ -536,3 +536,122 @@ OFFLINE (Buffer mode):
 - [ ] Twingate vs Tailscale vs Cloudflare Tunnel for remote access?
 - [ ] How to sync/replicate between cloud and eventual physical homelab?
 - [ ] Is "PAI not available offline" acceptable? (Affects architecture choice)
+
+---
+
+## Evict My Darlings: The Purity Principle
+
+### The Problem
+
+Modern AI tools (Claude, OpenCode, Cursor) create hidden state:
+- `~/.claude/memory.json` - "ephemeral memory" that persists
+- Dotfiles scattered across home directory
+- Session history stored outside projects
+- "Remembering" things outside of git
+
+**This is impure. This is wrong.**
+
+### The Rule: One Project = One Source of Truth
+
+```
+CORRECT:
+project-repo/
+├── .aito/              (all AI context for THIS project)
+│   ├── context.md      (what AI needs to know)
+│   ├── history/        (conversation logs, IN GIT)
+│   └── decisions.md    (why we did what we did)
+├── ARCHITECTURE.md
+└── [code]
+
+WRONG:
+~/.claude/memory.json           ← NO
+~/.opencode/sessions/           ← NO
+~/.config/aito/global-memory    ← NO
+```
+
+### Why?
+
+1. **Projects are portable** - Clone repo, get full context. Nothing external.
+2. **No hidden state** - Everything affecting behavior is visible in git.
+3. **No cross-contamination** - Project A's decisions don't leak to Project B.
+4. **True rollback** - `git reset --hard` actually resets EVERYTHING.
+5. **Auditable** - Anyone can see why AI did what it did.
+
+### What Dies
+
+- Claude's ephemeral memory
+- OpenCode's session persistence
+- Any dotfile that stores "learned preferences"
+- Any state that survives `rm -rf project && git clone`
+
+### What Lives
+
+- In-repo context (`.aito/`, `AGENTS.md`, `ARCHITECTURE.md`)
+- Git history
+- Explicit documentation
+
+### Implementation
+
+When PAI runs:
+1. Read context ONLY from current project repo
+2. Write history ONLY to current project repo  
+3. NO access to global state, dotfiles, or cross-project memory
+4. Each `cd` to a new project = fresh context, read from THAT repo
+
+**If it's not in git, it doesn't exist.**
+
+---
+
+## Firm Decision: Web App Frontend
+
+**Date: 2024-12-28**
+
+NixOS = implementation hell. Web = agnostic, swappable, future-proof.
+
+### What LifeOS Is
+
+A **single-page web app**. Two panels:
+- Left: AITO chat
+- Right: Tasks + schedule
+
+That's it. Not an OS. A dashboard.
+
+### What LifeOS Is NOT
+
+- A NixOS desktop environment
+- A tiling window manager
+- A replacement for native apps
+- Complex
+
+### Backend
+
+Hetzner VPS running NixOS:
+- Encrypted
+- Hosts the web app
+- Hosts PAI
+- All data in git or encrypted storage
+- SSH access
+- Web access via browser
+
+### The Stack
+
+```
+[Any Device] ──HTTPS──▶ [Hetzner VPS]
+   Browser                  NixOS
+   Fullscreen               ├── Web App (the UI)
+   = LifeOS                 ├── PAI (Claude Code)
+                            └── Data (git repos, encrypted)
+```
+
+### Lock Down Host Device
+
+The device running the browser is locked down externally:
+- Windows: Cold Turkey Blocker
+- macOS: Screen Time
+- Linux: whatever works
+- Phone: Parental controls
+
+Browser is the only allowed app. Browser fullscreen shows LifeOS.
+
+---
+
