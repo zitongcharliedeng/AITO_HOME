@@ -655,3 +655,87 @@ Browser is the only allowed app. Browser fullscreen shows LifeOS.
 
 ---
 
+
+---
+
+## The Kiosk Insight: Frontend IS the NixOS Machine
+
+**Epiphany:** There is no separate frontend deployment. The frontend runs ON the NixOS machine.
+
+### Architecture
+
+```
+┌────────────────────────────────────────────────────────┐
+│                   HETZNER VPS (NixOS)                  │
+│                                                        │
+│  DISPLAY (via VNC/RustDesk/KVM):                       │
+│  ┌──────────────────────────────────────────────────┐ │
+│  │  Minimal WM / GNOME                               │ │
+│  │  ┌────────────────────────────────────────────┐  │ │
+│  │  │  Browser (fullscreen, kiosk mode)          │  │ │
+│  │  │                                            │  │ │
+│  │  │     http://localhost:3000                  │  │ │
+│  │  │     (the LifeOS web app)                   │  │ │
+│  │  │                                            │  │ │
+│  │  │  Can't close. Can't escape. Can't alt-tab.│  │ │
+│  │  │  This IS the interface.                    │  │ │
+│  │  │                                            │  │ │
+│  │  └────────────────────────────────────────────┘  │ │
+│  └──────────────────────────────────────────────────┘ │
+│                                                        │
+│  SERVICES (systemd):                                   │
+│  • lifeos-webapp.service (the TypeScript app)          │
+│  • pai.service (Claude Code / AI assistant)            │
+│  • superproductivity.service (or embedded)             │
+│                                                        │
+│  ALL BUILT BY NIX:                                     │
+│  • nix build .#lifeos-webapp → web app binary          │
+│  • nix build .#pai → PAI wrapper                       │
+│  • nixos-rebuild → deploys everything atomically       │
+│                                                        │
+│  ROLLBACK:                                             │
+│  • nixos-rebuild switch --rollback                     │
+│  • Restores: old web app + old PAI + old config        │
+│  • Everything versioned together                       │
+└────────────────────────────────────────────────────────┘
+```
+
+### Access Methods
+
+| Method | What You See | Use Case |
+|--------|--------------|----------|
+| VNC / RustDesk | Fullscreen web app (the kiosk) | Daily use, "being in LifeOS" |
+| SSH | Terminal | Development, PAI interaction |
+| Web (future) | Same web app, but remote | Access from phone/other devices |
+
+### Why This Works
+
+1. **No deployment complexity** - localhost, always works
+2. **Atomic rollback** - NixOS rolls back web app + services together
+3. **Self-improving** - PAI develops from inside, commits, rebuilds
+4. **Bootstrap path clear** - get first version working → PAI takes over
+
+### Test Strategy
+
+| Layer | What | Test Type | Runner |
+|-------|------|-----------|--------|
+| Web App | TypeScript/UI | Unit + Component | Vitest |
+| PAI | AI behavior | Spec tests (from PAI specs) | NixOS VM test |
+| Integration | Full system | Browser automation in VM | NixOS VM test |
+
+PAI specs become integration tests: "Given this conversation, expect this behavior."
+
+### Bootstrap Sequence
+
+1. Get Hetzner VPS
+2. Install NixOS (encrypted)
+3. SSH in
+4. Minimal web app (hello world)
+5. PAI running (Claude Code)
+6. Kiosk mode (browser fullscreen)
+7. Connect via VNC → see LifeOS
+8. PAI can now develop from inside
+9. Self-improvement loop begins
+
+**Once step 7 works, the system can improve itself.**
+
