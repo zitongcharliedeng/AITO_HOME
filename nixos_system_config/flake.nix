@@ -9,13 +9,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     impermanence.url = "github:nix-community/impermanence";
+    nixos-hardware.url = "github:NixOS/nixos-hardware";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, nixpkgs, pre-commit-hooks, disko, impermanence, home-manager, ... }:
+  outputs = { self, nixpkgs, pre-commit-hooks, disko, impermanence, nixos-hardware, home-manager, ... }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
@@ -83,7 +84,10 @@
     in
     {
       nixosConfigurations = lib.mapAttrs (name: modules:
-        lib.nixosSystem { inherit system modules; }
+        lib.nixosSystem {
+          inherit system modules;
+          specialArgs = { inherit nixos-hardware; };
+        }
       ) systemModules;
 
       checks.${system} = approvalTests;
