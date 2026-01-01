@@ -61,8 +61,9 @@ pkgs.testers.runNixOSTest {
       nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
       # Make the repo available (simulates git clone)
+      # ../../../ goes from approval_tests/SYSTEM_INSTALLS_FROM_ONE_SCRIPT/ to AITO_HOME root
       virtualisation.sharedDirectories.repo = {
-        source = "${../..}";
+        source = "${../../..}";
         target = "/repo";
       };
     };
