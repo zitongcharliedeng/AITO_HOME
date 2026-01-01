@@ -11,33 +11,31 @@
 #    - Impermanence persists data across reboot
 #
 # The script is the API - backend (NixOS) is an implementation detail.
-# This test must work offline by pre-computing all dependencies.
 
 let
   system = "x86_64-linux";
 
-  # Pre-compute all dependencies needed for installation
-  # This makes the test work offline (no network in VM)
+  # The configuration we're installing
   testMachineConfig = self.nixosConfigurations.TEST_VM;
+  systemToplevel = testMachineConfig.config.system.build.toplevel;
+  diskoScript = testMachineConfig.config.system.build.diskoScript;
 
+  # The flake as a store path - this is the key to offline operation!
+  # When interpolated, ../../.. becomes a nix store path containing our flake
+  # with all inputs already resolved from the lockfile
+  flakeStorePath = ../../..;
+
+  # Pre-compute all dependencies so the nix store has everything
   dependencies = [
-    # The system we're installing
-    testMachineConfig.config.system.build.toplevel
-
-    # Disko for partitioning
+    systemToplevel
+    diskoScript
     disko.packages.${system}.disko
-
-    # All flake inputs (ensures they're in the store)
+    # Perl packages needed by nixos-install activation
+    testMachineConfig.pkgs.perlPackages.ConfigIniFiles
+    testMachineConfig.pkgs.perlPackages.FileSlurp
   ] ++ builtins.map (i: i.outPath) (builtins.attrValues self.inputs);
 
-  # Create closure info so we know all store paths needed
   closureInfo = pkgs.closureInfo { rootPaths = dependencies; };
-
-  # The disko binary path (pre-built, no network needed)
-  diskoBin = "${disko.packages.${system}.disko}/bin/disko";
-
-  # The system toplevel (what nixos-install copies)
-  systemToplevel = testMachineConfig.config.system.build.toplevel;
 in
 pkgs.testers.runNixOSTest {
   name = "SYSTEM_INSTALLS_FROM_ONE_SCRIPT";
@@ -62,22 +60,16 @@ pkgs.testers.runNixOSTest {
       disko.packages.${system}.disko
     ];
 
-    # Enable flakes and configure for offline use
+    # Enable flakes
     nix.settings = {
       experimental-features = [ "nix-command" "flakes" ];
-      # Disable network access for flake evaluation (everything pre-cached)
-      flake-registry = "";
-      accept-flake-config = false;
     };
 
-    # Make the repo available (simulates git clone)
-    virtualisation.sharedDirectories.repo = {
-      source = "${../../..}";
-      target = "/repo";
-    };
-
-    # Make closure info available so we can verify all deps are present
+    # Pre-built paths for verification
     environment.etc."install-closure".source = "${closureInfo}/store-paths";
+
+    # The flake store path - passed to the install script
+    environment.etc."flake-path".text = "${flakeStorePath}";
   };
 
   testScript = ''
@@ -99,18 +91,18 @@ pkgs.testers.runNixOSTest {
     installer.start()
     installer.wait_for_unit("multi-user.target")
 
-    # Copy repo to writable location (shared dir is read-only)
-    installer.succeed("cp -r /repo /tmp/AITO_HOME")
-    installer.succeed("chmod -R +w /tmp/AITO_HOME")
+    # Get the flake store path - everything we need is pre-built in the nix store
+    flake_path = installer.succeed("cat /etc/flake-path").strip()
+    installer.log(f"Using flake from store path: {flake_path}")
 
     # Verify we have the closure available
     installer.succeed("test -f /etc/install-closure")
     installer.log("All dependencies pre-cached in nix store")
 
-    # Run the install script - uses pre-built disko and system
-    # The script is the API we're testing
+    # Run the install script from the store path
+    # The store path contains the flake with all inputs resolved
     installer.succeed(
-        "cd /tmp/AITO_HOME/nixos_system_config && "
+        f"cd {flake_path}/nixos_system_config && "
         "echo 'yes' | ./BUILD_NIXOS_FROM_FLAKE_FOR_MACHINE_.sh --install /dev/vdb TEST_VM"
     )
 
