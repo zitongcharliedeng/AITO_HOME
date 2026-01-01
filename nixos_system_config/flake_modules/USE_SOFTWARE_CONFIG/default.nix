@@ -25,13 +25,12 @@
   system.activationScripts.initHomeGit = ''
     if [ ! -d /home/username/.git ]; then
       mkdir -p /home/username
+      ${pkgs.git}/bin/git init /home/username
+      ${pkgs.git}/bin/git -C /home/username config user.email "user@aito"
+      ${pkgs.git}/bin/git -C /home/username config user.name "User"
+      ${pkgs.git}/bin/git -C /home/username config --global --add safe.directory /home/username
+      ${pkgs.git}/bin/git -C /home/username commit --allow-empty -m "init"
       chown -R username:users /home/username
-      ${pkgs.shadow}/bin/su username -s /bin/sh -c '
-        ${pkgs.git}/bin/git init /home/username
-        ${pkgs.git}/bin/git -C /home/username config user.email "user@aito"
-        ${pkgs.git}/bin/git -C /home/username config user.name "User"
-        ${pkgs.git}/bin/git -C /home/username commit --allow-empty -m "init"
-      '
     fi
   '';
 
