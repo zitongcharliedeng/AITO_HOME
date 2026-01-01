@@ -1,41 +1,74 @@
 { pkgs, systemModules, impermanence }:
 
-# This test verifies the install script can:
-# 1. Run on a NixOS ISO-like environment
-# 2. Partition a disk with disko
-# 3. Install NixOS to the disk
+# End-to-end test: The FULL user flow
 #
-# Note: We can't easily test the reboot in NixOS VM tests,
-# so we verify up to the nixos-install step.
+# 1. Boot NixOS ISO-like environment
+# 2. Run the ONE install script
+# 3. Reboot into installed system
+# 4. Verify everything works:
+#    - System boots
+#    - Home directory is git repo
+#    - Impermanence persists data across reboot
+#
+# Pattern from nixpkgs/nixos/tests/installer.nix:
+# - installer node boots from /dev/vdb, installs to /dev/vda
+# - target node boots from /dev/vda (shares state_dir with installer)
 
 pkgs.testers.runNixOSTest {
   name = "SYSTEM_INSTALLS_FROM_ONE_SCRIPT";
 
-  nodes.machine = { config, pkgs, lib, ... }: {
-    # Simulate NixOS installer environment
-    virtualisation = {
-      memorySize = 4096;
-      diskSize = 8192;
-      # Extra disk for installation target
-      emptyDiskImages = [ 8192 ];
+  nodes = {
+    # The installer: simulates NixOS ISO environment
+    installer = { config, pkgs, lib, ... }: {
+      virtualisation = {
+        memorySize = 4096;
+        diskSize = 8192;
+        cores = 4;
+        # Boot from small disk, install to main disk
+        emptyDiskImages = [ 512 ];
+        rootDevice = "/dev/vdb";
+      };
+
+      # Packages available on NixOS ISO
+      environment.systemPackages = with pkgs; [
+        git
+        parted
+        dosfstools
+        e2fsprogs
+        util-linux
+      ];
+
+      # Enable flakes
+      nix.settings.experimental-features = [ "nix-command" "flakes" ];
+
+      # Include all dependencies needed for the install
+      # (test VM can't access network)
+      system.extraDependencies = with pkgs; [
+        stdenv
+        bintools
+      ];
+
+      # Make the repo available (simulates git clone)
+      virtualisation.sharedDirectories.repo = {
+        source = "${../..}";
+        target = "/repo";
+      };
     };
 
-    # Packages available on NixOS ISO
-    environment.systemPackages = with pkgs; [
-      git
-      parted
-      dosfstools
-      e2fsprogs
-      util-linux
-    ];
+    # The target: boots from installed system
+    target = { config, pkgs, lib, ... }: {
+      virtualisation = {
+        memorySize = 4096;
+        cores = 4;
+        useBootLoader = true;
+        useDefaultFilesystems = false;
+      };
 
-    # Enable flakes
-    nix.settings.experimental-features = [ "nix-command" "flakes" ];
-
-    # Make the repo available (simulates git clone)
-    virtualisation.sharedDirectories.repo = {
-      source = "${../..}";
-      target = "/repo";
+      # Fake filesystem (never used - we boot from installed disk)
+      virtualisation.fileSystems."/" = {
+        device = "/dev/disk/by-label/not-used";
+        fsType = "ext4";
+      };
     };
   };
 

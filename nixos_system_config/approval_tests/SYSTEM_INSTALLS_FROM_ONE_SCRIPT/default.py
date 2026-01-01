@@ -1,45 +1,61 @@
-# Test: BUILD_NIXOS_FROM_FLAKE_FOR_MACHINE_.sh works from NixOS ISO-like environment
+# End-to-end test: Full user flow
 #
-# What we test:
-# 1. Script runs without error
-# 2. Disko partitions the target disk (with tmpfs root)
-# 3. NixOS installs to /mnt
-#
-# What we can't test (requires actual reboot):
-# - System boots after install
-# - Impermanence works correctly
-# - Home directory is git repo (home-manager)
-# - SSH works
+# 1. Boot ISO-like environment (installer)
+# 2. Run ONE install script
+# 3. Reboot into installed system (target)
+# 4. Verify: system boots, home is git repo, data persists
 
-machine.wait_for_unit("multi-user.target")
+# === PHASE 1: Install ===
+installer.start()
+installer.wait_for_unit("multi-user.target")
 
 # Copy repo to writable location (shared dir is read-only)
-machine.succeed("cp -r /repo /tmp/AITO_HOME")
-machine.succeed("chmod -R +w /tmp/AITO_HOME")
+installer.succeed("cp -r /repo /tmp/AITO_HOME")
+installer.succeed("chmod -R +w /tmp/AITO_HOME")
 
-# Verify the install script exists
-machine.succeed("test -x /tmp/AITO_HOME/nixos_system_config/BUILD_NIXOS_FROM_FLAKE_FOR_MACHINE_.sh")
-
-# The second disk is /dev/vdb in QEMU
-# Run install script in install mode (non-interactive via yes pipe)
-machine.succeed(
+# Run install script targeting /dev/vda (main disk)
+installer.succeed(
     "cd /tmp/AITO_HOME/nixos_system_config && "
-    "echo 'yes' | ./BUILD_NIXOS_FROM_FLAKE_FOR_MACHINE_.sh --install /dev/vdb TEST_VM"
+    "echo 'yes' | ./BUILD_NIXOS_FROM_FLAKE_FOR_MACHINE_.sh --install /dev/vda TEST_VM"
 )
 
-# Verify disk was partitioned (has partitions)
-machine.succeed("lsblk /dev/vdb | grep -E 'part'")
+# Verify install completed
+installer.succeed("test -d /mnt/nix/store")
+installer.log("Install completed - shutting down installer")
 
-# Verify filesystems were created (EFI vfat and nix ext4)
-machine.succeed("lsblk -f /dev/vdb | grep -E 'vfat|ext4'")
+installer.succeed("umount -R /mnt")
+installer.succeed("sync")
+installer.shutdown()
 
-# Verify NixOS was installed (has /mnt with nix store)
-machine.succeed("test -d /mnt/nix/store")
+# === PHASE 2: Boot installed system ===
+# Share state directory so target boots from the disk we just installed to
+target.state_dir = installer.state_dir
 
-# Verify boot partition was mounted
-machine.succeed("mountpoint /mnt/boot")
+target.start()
+target.wait_for_unit("multi-user.target")
+target.log("Installed system booted successfully!")
 
-# Verify /nix is mounted (for impermanence)
-machine.succeed("mountpoint /mnt/nix")
+# === PHASE 3: Verify system works ===
 
-machine.log("Install script completed successfully!")
+# Home directory is a git repo
+target.succeed("test -d /home/username/.git")
+target.succeed("su - username -c 'git status'")
+target.log("Home directory is a valid git repo")
+
+# Create test file to verify persistence
+target.succeed("su - username -c 'echo persistence-test > ~/test-file'")
+
+# === PHASE 4: Reboot and verify persistence ===
+target.shutdown()
+target.start()
+target.wait_for_unit("multi-user.target")
+
+# Home directory still git repo after reboot
+target.succeed("test -d /home/username/.git")
+target.succeed("su - username -c 'git status'")
+
+# Test file persisted (impermanence working)
+target.succeed("test -f /home/username/test-file")
+target.succeed("su - username -c 'cat ~/test-file | grep persistence-test'")
+
+target.log("SUCCESS: System installed, boots, home is git repo, data persists across reboot")
