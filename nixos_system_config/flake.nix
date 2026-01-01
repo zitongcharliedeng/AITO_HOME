@@ -23,8 +23,14 @@
 
       hardwareConfigs = lib.filterAttrs (n: _: lib.hasSuffix ".nix" n) (builtins.readDir ./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_);
 
+      # Disko modules for disk configuration (needed by install script AND installed system)
+      diskoModules = [
+        disko.nixosModules.disko
+        ./flake_modules/USE_DISKO_CONFIG
+      ];
+
       # Production system configuration
-      # Includes impermanence - tests must provide /persist filesystem
+      # Includes disko (for disk layout) and impermanence
       systemModules = lib.mapAttrs' (file: _: {
         name = lib.removeSuffix ".nix" file;
         value = [
@@ -38,14 +44,8 @@
           ./flake_modules/USE_SOFTWARE_CONFIG
           impermanence.nixosModules.impermanence
           ./flake_modules/USE_SOFTWARE_CONFIG/default_modules/USE_IMPERMANENCE
-        ];
+        ] ++ diskoModules;
       }) hardwareConfigs;
-
-      # Disko modules for fresh installs (partitions disk)
-      diskoModules = [
-        disko.nixosModules.disko
-        ./flake_modules/USE_DISKO_CONFIG
-      ];
 
       approvalTestDirs = lib.filterAttrs (_: type: type == "directory") (builtins.readDir ./approval_tests);
 
@@ -69,15 +69,6 @@
     {
       nixosConfigurations = lib.mapAttrs (name: modules:
         lib.nixosSystem { inherit system modules; }
-      ) systemModules;
-
-      # Configurations with disko for fresh installs
-      # Usage: disko --flake .#install-MACHINE_NAME --mode disko
-      diskoConfigurations = lib.mapAttrs (name: modules:
-        lib.nixosSystem {
-          inherit system;
-          modules = modules ++ diskoModules;
-        }
       ) systemModules;
 
       checks.${system} = approvalTests;
