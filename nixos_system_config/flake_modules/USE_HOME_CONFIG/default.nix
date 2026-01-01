@@ -1,12 +1,8 @@
-# Home Manager configuration for user
-# Declarative home directory management
-
 { pkgs, ... }:
 
 {
   home.stateVersion = "24.11";
 
-  # Git configuration
   programs.git = {
     enable = true;
     settings = {
@@ -17,14 +13,12 @@
     };
   };
 
-  # Bash configuration
   programs.bash = {
     enable = true;
     historyControl = [ "ignoredups" "erasedups" ];
   };
 
-  # Home directory as git repo (initialized declaratively)
-  home.activation.initHomeGit = {
+  home.activation.initializeHomeDirectoryAsGitRepository = {
     after = [ "writeBoundary" ];
     before = [];
     data = ''

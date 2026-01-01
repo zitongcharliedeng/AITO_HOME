@@ -23,14 +23,11 @@
 
       hardwareConfigs = lib.filterAttrs (n: _: lib.hasSuffix ".nix" n) (builtins.readDir ./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_);
 
-      # Disko modules for disk configuration (needed by install script AND installed system)
       diskoModules = [
         disko.nixosModules.disko
         ./flake_modules/USE_DISKO_CONFIG
       ];
 
-      # Production system configuration
-      # Includes disko (for disk layout) and impermanence
       systemModules = lib.mapAttrs' (file: _: {
         name = lib.removeSuffix ".nix" file;
         value = [
@@ -53,6 +50,17 @@
         import ./approval_tests/${name} { inherit pkgs systemModules impermanence self disko; }
       ) approvalTestDirs;
 
+      noCommentsInNixFilesScript = pkgs.writeShellScript "no-comments-in-nix-files" ''
+        set -e
+        for file in "$@"; do
+          if ${pkgs.gnugrep}/bin/grep -n '^\s*#' "$file" | ${pkgs.gnugrep}/bin/grep -v '#!'; then
+            echo "ERROR: Comments found in $file"
+            echo "Comments are prohibited - use verbose naming and refactoring instead"
+            exit 1
+          fi
+        done
+      '';
+
       preCommitCheck = pre-commit-hooks.lib.${system}.run {
         src = ./.;
         hooks = {
@@ -61,6 +69,13 @@
             name = "nix-flake-check";
             entry = "${pkgs.nix}/bin/nix --extra-experimental-features 'nix-command flakes' flake check --no-build ./nixos_system_config";
             pass_filenames = false;
+            stages = [ "pre-commit" ];
+          };
+          no-comments-in-nix-files = {
+            enable = true;
+            name = "no-comments-in-nix-files";
+            entry = "${noCommentsInNixFilesScript}";
+            files = "\\.nix$";
             stages = [ "pre-commit" ];
           };
         };
@@ -84,7 +99,6 @@
         inherit (preCommitCheck) shellHook;
       };
 
-      # Expose disko for use by the install script (avoids network fetch)
       apps.${system}.disko = {
         type = "app";
         program = "${disko.packages.${system}.disko}/bin/disko";
