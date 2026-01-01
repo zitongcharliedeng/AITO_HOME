@@ -2,102 +2,152 @@
 
 This is the only context file. Humans are agents too.
 
-**This file contains philosophy and conventions only.** No implementation specs. The test names ARE the specs - putting specs here adds indirection.
+**This file contains philosophy and conventions only.** No implementation specs. The test names ARE the specs.
 
 This is AITO's home. The system IS AITO (AI Task Orchestrator). Not "AITO runs on the system" - the whole thing is one entity.
 
-## Philosophy
+---
 
-**SCREAMING_SNAKE_CASE scripts are spells.** Human-readable intentions you can cast. Even if your LLM goes down, you search for the spell name and cast it yourself. The LLM is just autocomplete on steroids.
+## Core Philosophy
 
-**Approval tests are the spec.** Golden masters capture human-perceivable output (screenshots, audio, structured text). If the output matches the golden, the experience is correct. Black box testing on human qualia. See: Llewellyn Falco's Approval Testing, Michael Feathers' Golden Master Testing.
+### Cog and Ito (The Mental Model)
 
-**The LLM figures out implementation.** You describe the critical user journey. LLM writes code until outputs match goldens. You review diffs in PRs. Give LGTM. Only then merge.
+- **Ito** = prefrontal cortex, conscious planning self, long-term eudaimonia
+- **Cog** = body, reflexes, addictions, takes over when Ito is absent
+- **AITO** = AI assistant that helps Ito control Cog
+- **Ulysses Pacts** = pre-commitments that bind Cog when Ito isn't present
 
-**Tests bend to production, NOT the other way around.** Never modify production config to make tests pass. If the test fails, fix the test or fix the actual implementation - never add test-only hacks to production.
+**Core Principle:** Build your body like software. Declarative. Changelogable. Testable. Rollbackable.
+
+### The Home Directory IS the Git Repo
+
+The user's home directory is literally this repository. Clone it, and you have the system. Push changes, and you're updating the system spec.
+
+```
+~/ = AITO_HOME/
+├── AGENTS.md              (this file - philosophy)
+├── nixos_system_config/   (NixOS flake)
+└── [future: PAI, webapp, etc.]
+```
+
+**If it's not in git, it doesn't exist.** The system can roll back. Memory never deletes.
+
+### Evict My Darlings: The Purity Principle
+
+Modern AI tools create hidden state:
+- `~/.claude/memory.json` - ephemeral memory that persists
+- Dotfiles scattered across home
+- Session history stored outside projects
+
+**This is impure. This is wrong.**
+
+**Rule: One Project = One Source of Truth**
+
+```
+CORRECT:
+project-repo/
+├── .aito/              (all AI context for THIS project)
+│   ├── context.md
+│   └── history/
+└── [code]
+
+WRONG:
+~/.claude/memory.json           <- NO
+~/.config/aito/global-memory    <- NO
+```
+
+**Why?**
+1. Projects are portable - clone repo, get full context
+2. No hidden state - everything in git is visible
+3. No cross-contamination between projects
+4. True rollback - `git reset --hard` actually resets EVERYTHING
+5. Auditable - anyone can see why AI did what it did
+
+---
 
 ## Naming Conventions
 
-- **SCREAMING_SNAKE_CASE** = Spells (APIs). The only way to interact with the system.
+- **SCREAMING_SNAKE_CASE** = Spells (APIs). Human-readable intentions you can cast. Even if your LLM goes down, you search for the spell name and cast it yourself.
 - **lowercase** = Implementation details. Never called directly.
 
-## Test Naming
+**SCREAMING_SNAKE_CASE scripts are spells.** The LLM is just autocomplete on steroids.
+
+---
+
+## Testing Philosophy
+
+### Approval Tests Are The Spec
+
+Golden masters capture human-perceivable output (screenshots, audio, structured text). If the output matches the golden, the experience is correct. Black box testing on human qualia.
+
+See: Llewellyn Falco's Approval Testing, Michael Feathers' Golden Master Testing.
+
+### The LLM Figures Out Implementation
+
+You describe the critical user journey. LLM writes code until outputs match goldens. You review diffs in PRs. Give LGTM. Only then merge.
+
+### Tests Bend to Production, NOT the Other Way Around
+
+Never modify production config to make tests pass. If the test fails, fix the test or fix the actual implementation - never add test-only hacks to production.
+
+### Test Naming
 
 Test names are long descriptive sentences describing the EXPECTED STATE, not implementation steps.
 
-**Good:** `TERMINAL_IS_VISIBLE_ON_LEFT_HALF_OF_SCREEN_SHOWING_HOME_DIRECTORY_IS_A_GIT_REPO`
-**Bad:** `AFTER_LOGIN_TERMINAL_SHOWS_GIT_REPO` (implies action, not state)
+**Good:** `HOME_DIRECTORY_IS_GIT_REPO_AFTER_REBOOT`
+**Bad:** `TEST_GIT_REPO_EXISTS` (vague, implementation-focused)
 
-The test should simply: boot → login → screenshot. If the system is correct, the expected state is already there. No workarounds in tests (opening apps, closing dialogs, pressing shortcuts).
+The test should simply: boot -> check state. If the system is correct, the expected state is already there.
 
-## Code Style
+### What Nix Handles vs What Tests Handle
 
-**Use keyword arguments for clarity.** When calling functions, use `login(machine, password="password")` not `login(machine, "password")`.
+**Nix guarantees declaratively:** hostname, timezone, packages, users, services. If `nixos-rebuild` succeeds, these are correct by definition.
 
-**No comments or docstrings.** Function names and parameters should be self-explanatory. If you need a comment, your naming is bad.
-
-**Minimal code to pass tests.** The smallest amount of lines, smallest amount of size needed to make tests pass. Don't over-engineer.
-
-**99% imports, 1% glue.** In an ideal world, all code is imports with good names. No bespoke code. No reinventing wheels. If you see the bar at the top, assume the hardware works - someone else tested it. Unix philosophy: use pre-made, well-maintained modules.
-
-## Approval Testing Philosophy
-
-**Test human-perceivable output.** The system is a visual desktop. Test what humans experience - screens, sounds, structured responses. Black box approach.
-
-**Golden types:**
-- **Screenshots** (.png) - what the user sees
-- **Audio** (.wav) - what the user hears (future)
-- **Text patterns** (regex) - structured LLM responses, skill procs
-
-**Reproducible = same inputs → same output.** With locally-hosted LLMs (fixed weights, temperature=0), even AI responses are deterministic. Same input → same output → same golden.
+**Tests verify:** Emergent runtime behavior. Things that can only be observed, not declared.
 
 ### Approval Workflow
 
-1. **No golden exists** → test runs, captures output, human must approve to create golden
-2. **Golden exists, output matches** → test passes
-3. **Golden exists, output differs** → test fails, human must approve change or reject
+1. **No golden exists** -> test runs, captures output, human must approve to create golden
+2. **Golden exists, output matches** -> test passes
+3. **Golden exists, output differs** -> test fails, human must approve change or reject
 
-Goldens live in `approval_tests/TEST_NAME/goldens/`. Screenshots are committed to the PR branch for human review.
+### Golden Types
 
-### Four-Step Workflow for Adding Features
+- **Screenshots** (.png) - what the user sees
+- **Text output** (.txt) - command output, logs
+- **Structured data** (.json) - API responses
 
-1. **Describe the intention** - Write a test file named after what SHOULD happen. The name IS the spec.
+---
 
-2. **First run captures output** - No golden exists yet. Test runs, captures output. Test "fails" because there's nothing to compare against.
+## Code Style
 
-3. **Approve or reject** - You review the captured output. Does it match your intention? If yes, it becomes the golden. If no, LLM keeps iterating.
+**Use keyword arguments for clarity.** `login(machine, password="password")` not `login(machine, "password")`
 
-4. **Goldens prevent regression** - Future runs compare against approved goldens. Mismatch = failure. You review diff in PR. Approve new golden or reject the change.
+**No comments or docstrings.** Function names and parameters should be self-explanatory. If you need a comment, your naming is bad.
 
-### Why Goldens Over Assertions
+**Minimal code to pass tests.** Smallest amount of lines needed. Don't over-engineer.
 
-- No brittle selectors or imperative checks
-- Captures the WHOLE experience, not just what you thought to test
-- Diffs are human-reviewable - you SEE/HEAR the regression
-- The golden IS the spec - no translation layer
+**99% imports, 1% glue.** All code is imports with good names. No bespoke code. No reinventing wheels. Unix philosophy: use pre-made, well-maintained modules.
 
-### What Nix Handles vs What Approval Tests Handle
-
-**Nix guarantees declaratively:** hostname, timezone, packages, users, services installed. If `nixos-rebuild` succeeds, these are correct by definition.
-
-**Approval tests verify:** What the human actually perceives. GUI layout, sounds, responses, the whole experience. These emerge at runtime and can only be observed, not declared.
+---
 
 ## Agent Workflow Rules
 
-**Only hand back when tests pass.** Don't give incomplete work to the human. Run tests, fix failures, then hand back.
+**Only hand back when tests pass.** Don't give incomplete work to the human.
 
-**Source of truth is GitHub.** All changes go through PRs. Whether using agent, VS Code, or Vim - it all flows through GitHub.
+**Source of truth is GitHub.** All changes go through PRs. CI gates everything.
 
-**Local testing for speed.** Agents should know how to run tests locally:
+**Local testing for speed:**
 ```
 nix build .#checks.x86_64-linux.TEST_NAME
 ```
 Don't wait for GitHub Actions when you can iterate locally.
 
+---
+
 ## Development Workflow
 
-**Enter the devShell before doing any work.** This is mandatory.
-
+**Enter the devShell before doing any work:**
 ```
 cd ~/nixos_system_config
 nix develop
@@ -106,32 +156,85 @@ nix develop
 This automatically:
 - Installs git pre-commit hooks that run `nix flake check`
 - Blocks commits until all tests pass
-- Provides all development dependencies
 
-**If you're using direnv**, add `use flake` to `.envrc` and it auto-activates.
+**Pre-commit hooks block bad commits.** Every commit runs the full test suite.
 
-**Pre-commit hooks block bad commits.** Every commit runs the full test suite. If tests fail, commit is rejected. No broken code enters the repo.
+**CI runs on PRs.** GitHub Actions runs tests. PRs cannot merge until checks pass.
 
-**CI runs on PRs.** GitHub Actions runs approval tests and auto-commits updated goldens to the PR branch. PRs cannot merge until checks pass.
+---
 
 ## First Time Setup
 
-1. Download the NixOS graphical installer ISO
+1. Download the NixOS minimal installer ISO (no GUI needed)
 2. Boot from the ISO
-3. Click through the installer - none of the settings matter:
-   - Region, language, keyboard: pick anything
-   - Username and password: pick anything
-   - Desktop: select "No desktop"
-   - Partitioning: use the defaults
-4. Finish install, reboot, login with the installer user
-5. Connect to internet
-6. Run:
+3. Partition disk, mount at /mnt
+4. Run:
    ```
    nix-shell -p git
-   git clone https://github.com/zitongcharliedeng/AITO_HOME.git .
-   ~/nixos_system_config/BUILD_NIXOS_FROM_FLAKE_FOR_MACHINE_.sh MY_NEW_MACHINE
+   git clone https://github.com/zitongcharliedeng/AITO_HOME.git /mnt/home/username
+   cd /mnt/home/username/nixos_system_config
+   ./BUILD_NIXOS_FROM_FLAKE_FOR_MACHINE_.sh MY_NEW_MACHINE
    ```
-7. Reboot
-8. Login with `username` / `password` - you now have AITO with git available
+5. Reboot
+6. Login with `username` / `password` - your home directory IS the git repo
 
-The repo IS your home directory. The script auto-generates `MY_NEW_MACHINE.nix` with your hardware config. Machine names must be SCREAMING_SNAKE_CASE.
+The script auto-generates `MY_NEW_MACHINE.nix` with your hardware config. Machine names must be SCREAMING_SNAKE_CASE.
+
+---
+
+## Architecture: Headless NixOS + SSH + Claude
+
+**What we need:**
+- Terminal (TTY or SSH)
+- Git
+- Claude Code (PAI)
+
+**What we DON'T need:**
+- Display manager (GDM, SDDM, etc.)
+- Desktop environment (GNOME, KDE, etc.)
+- GUI applications
+
+The web frontend (when built) runs elsewhere or is accessed remotely. The NixOS machine is pure infrastructure - a terminal you SSH into.
+
+**Why?**
+- NixOS hardware support for GUIs is inconsistent (brightness, rotation, etc.)
+- We don't need GUI - we have a web frontend
+- Simpler = fewer things to break
+- SSH works everywhere
+
+---
+
+## Enforcement Hierarchy
+
+1. **Automated enforcement** (NixOS, CI) - ideal
+2. **External enforcement** (Cold Turkey key with partner, Pavlok)
+3. **Logged manual intervention** (documented, verified)
+4. **Time tracking** (catches everything, safety net)
+
+If it can't be enforced -> find a way, or don't bother documenting.
+
+---
+
+## Daily Review (Ito's Conscious Window)
+
+```
+Morning (as Ito):
+  -> Review time tracking from yesterday
+  -> Identify where Cog took over
+  -> Talk to AITO about patterns
+  -> Adjust pacts / add restrictions
+  -> Commit changes to git
+  -> Changelog updated
+```
+
+---
+
+## Data Separation
+
+| Type | Location | Mutable? | Rollbackable? |
+|------|----------|----------|---------------|
+| NixOS config | git repo | Yes | Yes |
+| Conversation history | `/var/aito/conversations/` | **Append-only** | **Never delete** |
+| Photos/media | `/var/aito/media/` | **Append-only** | **Never delete** |
+
+**Conversation history is sacred.** System can roll back. Memory never deletes.

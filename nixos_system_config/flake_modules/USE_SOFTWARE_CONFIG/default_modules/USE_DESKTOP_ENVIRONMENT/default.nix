@@ -1,43 +1,9 @@
-{ pkgs, lib, ... }:
+{ pkgs, ... }:
 
 {
-  services.xserver.enable = true;
-  services.xserver.displayManager.gdm.enable = true;
-  services.xserver.desktopManager.gnome.enable = true;
-
-  services.gnome.core-utilities.enable = false;
-
-  environment.gnome.excludePackages = with pkgs; [
-    gnome-tour
-    gnome-initial-setup
-  ];
-
-  programs.dconf = {
-    enable = true;
-    profiles.user.databases = [{
-      settings = {
-        "org/gnome/shell" = {
-          welcome-dialog-last-shown-version = "999.0.0";
-        };
-        "org/gnome/desktop/privacy" = {
-          remember-recent-files = false;
-        };
-        "org/gnome/desktop/session" = {
-          idle-delay = lib.gvariant.mkUint32 0;
-        };
-        "org/gnome/settings-daemon/plugins/power" = {
-          sleep-inactive-ac-type = "nothing";
-        };
-      };
-    }];
-  };
-
-  hardware.graphics.enable = true;
-
   environment.systemPackages = with pkgs; [
     git
-    gnome-terminal
-    firefox
+    vim
   ];
 
   programs.bash.interactiveShellInit = ''

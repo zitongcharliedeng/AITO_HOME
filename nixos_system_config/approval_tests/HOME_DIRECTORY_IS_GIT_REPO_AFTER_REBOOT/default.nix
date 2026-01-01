@@ -1,10 +1,10 @@
 { pkgs, systemModules }:
 
 pkgs.testers.runNixOSTest {
-  name = "FIRST_BOOT_SHOWS_LOGIN";
+  name = "HOME_DIRECTORY_IS_GIT_REPO_AFTER_REBOOT";
   nodes.machine = {
     imports = systemModules.TEST_VM;
-    virtualisation.memorySize = 4096;
+    virtualisation.memorySize = 1024;
   };
   testScript = builtins.readFile ./default.py;
 }
