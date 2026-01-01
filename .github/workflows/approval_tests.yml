@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [dev]
+    branches: [main, dev]
 
 jobs:
   test:
@@ -16,4 +16,4 @@ jobs:
 
       - name: Run tests
         run: |
-          nix build ./nixos_system_config#checks.x86_64-linux.HOME_DIRECTORY_IS_GIT_REPO_AFTER_REBOOT -L
+          nix build ./nixos_system_config#checks.x86_64-linux.SYSTEM_INSTALLS_FROM_ONE_SCRIPT -L
