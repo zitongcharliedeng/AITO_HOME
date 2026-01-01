@@ -50,7 +50,7 @@
       approvalTestDirs = lib.filterAttrs (_: type: type == "directory") (builtins.readDir ./approval_tests);
 
       approvalTests = lib.mapAttrs (name: _:
-        import ./approval_tests/${name} { inherit pkgs systemModules impermanence; }
+        import ./approval_tests/${name} { inherit pkgs systemModules impermanence self disko; }
       ) approvalTestDirs;
 
       preCommitCheck = pre-commit-hooks.lib.${system}.run {
@@ -91,6 +91,12 @@
 
       devShells.${system}.default = pkgs.mkShell {
         inherit (preCommitCheck) shellHook;
+      };
+
+      # Expose disko for use by the install script (avoids network fetch)
+      apps.${system}.disko = {
+        type = "app";
+        program = "${disko.packages.${system}.disko}/bin/disko";
       };
     };
 }

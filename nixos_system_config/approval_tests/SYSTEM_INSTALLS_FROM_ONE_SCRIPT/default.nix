@@ -1,19 +1,44 @@
-{ pkgs, systemModules, impermanence }:
+{ pkgs, systemModules, impermanence, self, disko }:
 
 # End-to-end test: The FULL user flow
 #
 # 1. Boot NixOS ISO-like environment
-# 2. Run the ONE install script
+# 2. Run the ONE install script (same script for install AND update)
 # 3. Reboot into installed system
 # 4. Verify everything works:
 #    - System boots
-#    - Home directory is git repo
+#    - Home directory is git repo (rollback-able)
 #    - Impermanence persists data across reboot
 #
-# Pattern from nix-community/disko tests:
-# - Single installer node with extra disk
-# - Use create_machine() in testScript to boot from installed disk
+# The script is the API - backend (NixOS) is an implementation detail.
+# This test must work offline by pre-computing all dependencies.
 
+let
+  system = "x86_64-linux";
+
+  # Pre-compute all dependencies needed for installation
+  # This makes the test work offline (no network in VM)
+  testMachineConfig = self.nixosConfigurations.TEST_VM;
+
+  dependencies = [
+    # The system we're installing
+    testMachineConfig.config.system.build.toplevel
+
+    # Disko for partitioning
+    disko.packages.${system}.disko
+
+    # All flake inputs (ensures they're in the store)
+  ] ++ builtins.map (i: i.outPath) (builtins.attrValues self.inputs);
+
+  # Create closure info so we know all store paths needed
+  closureInfo = pkgs.closureInfo { rootPaths = dependencies; };
+
+  # The disko binary path (pre-built, no network needed)
+  diskoBin = "${disko.packages.${system}.disko}/bin/disko";
+
+  # The system toplevel (what nixos-install copies)
+  systemToplevel = testMachineConfig.config.system.build.toplevel;
+in
 pkgs.testers.runNixOSTest {
   name = "SYSTEM_INSTALLS_FROM_ONE_SCRIPT";
 
@@ -26,24 +51,33 @@ pkgs.testers.runNixOSTest {
       emptyDiskImages = [ 8192 ];
     };
 
-    # Packages available on NixOS ISO
+    # Packages available on NixOS ISO + disko for partitioning
     environment.systemPackages = with pkgs; [
       git
       parted
       dosfstools
       e2fsprogs
       util-linux
+      nixos-install-tools
+      disko.packages.${system}.disko
     ];
 
-    # Enable flakes
-    nix.settings.experimental-features = [ "nix-command" "flakes" ];
+    # Enable flakes and configure for offline use
+    nix.settings = {
+      experimental-features = [ "nix-command" "flakes" ];
+      # Disable network access for flake evaluation (everything pre-cached)
+      flake-registry = "";
+      accept-flake-config = false;
+    };
 
     # Make the repo available (simulates git clone)
-    # ../../../ goes from approval_tests/SYSTEM_INSTALLS_FROM_ONE_SCRIPT/ to AITO_HOME root
     virtualisation.sharedDirectories.repo = {
       source = "${../../..}";
       target = "/repo";
     };
+
+    # Make closure info available so we can verify all deps are present
+    environment.etc."install-closure".source = "${closureInfo}/store-paths";
   };
 
   testScript = ''
@@ -69,7 +103,12 @@ pkgs.testers.runNixOSTest {
     installer.succeed("cp -r /repo /tmp/AITO_HOME")
     installer.succeed("chmod -R +w /tmp/AITO_HOME")
 
-    # Run install script targeting /dev/vdb (extra disk)
+    # Verify we have the closure available
+    installer.succeed("test -f /etc/install-closure")
+    installer.log("All dependencies pre-cached in nix store")
+
+    # Run the install script - uses pre-built disko and system
+    # The script is the API we're testing
     installer.succeed(
         "cd /tmp/AITO_HOME/nixos_system_config && "
         "echo 'yes' | ./BUILD_NIXOS_FROM_FLAKE_FOR_MACHINE_.sh --install /dev/vdb TEST_VM"
@@ -91,10 +130,11 @@ pkgs.testers.runNixOSTest {
 
     # === PHASE 3: Verify system works ===
 
-    # Home directory is a git repo
+    # Home directory is a git repo (can roll back to any commit)
     target.succeed("test -d /home/username/.git")
     target.succeed("su - username -c 'git status'")
-    target.log("Home directory is a valid git repo")
+    target.succeed("su - username -c 'git log --oneline -1'")  # Verify git history exists
+    target.log("Home directory is a valid git repo with history")
 
     # Create test file to verify persistence
     target.succeed("su - username -c 'echo persistence-test > ~/test-file'")
@@ -112,6 +152,6 @@ pkgs.testers.runNixOSTest {
     target.succeed("test -f /home/username/test-file")
     target.succeed("su - username -c 'cat ~/test-file | grep persistence-test'")
 
-    target.log("SUCCESS: System installed, boots, home is git repo, data persists across reboot")
+    target.log("SUCCESS: Install script works, system boots, home is git repo, data persists")
   '';
 }

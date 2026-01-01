@@ -109,11 +109,17 @@ if $INSTALL_MODE; then
         exit 0
     fi
 
-    # Run disko to partition (disko is in the flake)
+    # Run disko to partition
+    # If disko is in PATH (e.g., during testing), use it directly
+    # Otherwise, use nix run to fetch it from the flake
     echo "Partitioning disk..."
-    nix --extra-experimental-features 'nix-command flakes' run github:nix-community/disko -- \
-        --mode disko \
-        --flake "$SCRIPT_DIR#$MACHINE"
+    if command -v disko &> /dev/null; then
+        disko --mode disko --flake "$SCRIPT_DIR#$MACHINE"
+    else
+        nix --extra-experimental-features 'nix-command flakes' run "$SCRIPT_DIR#disko" -- \
+            --mode disko \
+            --flake "$SCRIPT_DIR#$MACHINE"
+    fi
 
     # Install NixOS
     echo "Installing NixOS..."
