@@ -1,0 +1,19 @@
+name: Approval Tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [dev]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/determinate-nix-action@v3
+
+      - name: Run tests
+        run: |
+          nix build ./nixos_system_config#checks.x86_64-linux.HOME_DIRECTORY_IS_GIT_REPO_AFTER_REBOOT -L

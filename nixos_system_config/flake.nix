@@ -3,70 +3,94 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    impermanence.url = "github:nix-community/impermanence";
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, ... }:
+  outputs = { self, nixpkgs, pre-commit-hooks, disko, impermanence, home-manager, ... }:
     let
       system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
+      pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
       lib = nixpkgs.lib;
-      machinesDir = ./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_;
 
-      machineFiles = builtins.readDir machinesDir;
-      machineNames = builtins.filter (name: lib.hasSuffix ".nix" name) (builtins.attrNames machineFiles);
+      hardwareConfigs = lib.filterAttrs (n: _: lib.hasSuffix ".nix" n) (builtins.readDir ./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_);
 
-      mkSystem = file: nixpkgs.lib.nixosSystem {
-        inherit system;
-        modules = [
-          (machinesDir + "/${file}")
+      # Production system configuration
+      # Includes impermanence - tests must provide /persist filesystem
+      systemModules = lib.mapAttrs' (file: _: {
+        name = lib.removeSuffix ".nix" file;
+        value = [
+          (./flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_ + "/${file}")
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.username = import ./flake_modules/USE_HOME_CONFIG;
+          }
           ./flake_modules/USE_SOFTWARE_CONFIG
-          { nixpkgs.config.allowUnfree = true; }
+          impermanence.nixosModules.impermanence
+          ./flake_modules/USE_SOFTWARE_CONFIG/default_modules/USE_IMPERMANENCE
         ];
+      }) hardwareConfigs;
+
+      # Disko modules for fresh installs (partitions disk)
+      diskoModules = [
+        disko.nixosModules.disko
+        ./flake_modules/USE_DISKO_CONFIG
+      ];
+
+      approvalTestDirs = lib.filterAttrs (_: type: type == "directory") (builtins.readDir ./approval_tests);
+
+      approvalTests = lib.mapAttrs (name: _:
+        import ./approval_tests/${name} { inherit pkgs systemModules impermanence; }
+      ) approvalTestDirs;
+
+      preCommitCheck = pre-commit-hooks.lib.${system}.run {
+        src = ./.;
+        hooks = {
+          flake-check = {
+            enable = true;
+            name = "nix-flake-check";
+            entry = "${pkgs.nix}/bin/nix --extra-experimental-features 'nix-command flakes' flake check --no-build ./nixos_system_config";
+            pass_filenames = false;
+            stages = [ "pre-commit" ];
+          };
+        };
       };
     in
     {
-      nixosConfigurations = builtins.listToAttrs (
-        map (file: {
-          name = builtins.replaceStrings [".nix"] [""] file;
-          value = mkSystem file;
-        }) machineNames
-      );
+      nixosConfigurations = lib.mapAttrs (name: modules:
+        lib.nixosSystem { inherit system modules; }
+      ) systemModules;
 
-      checks.${system}.system_boots = pkgs.testers.nixosTest {
-        name = "system-boots";
+      # Configurations with disko for fresh installs
+      # Usage: disko --flake .#install-MACHINE_NAME --mode disko
+      diskoConfigurations = lib.mapAttrs (name: modules:
+        lib.nixosSystem {
+          inherit system;
+          modules = modules ++ diskoModules;
+        }
+      ) systemModules;
 
-        nodes.machine = { ... }: {
-          imports = [ ./flake_modules/USE_SOFTWARE_CONFIG ];
+      checks.${system} = approvalTests;
 
-          fileSystems."/" = {
-            device = "/dev/vda1";
-            fsType = "ext4";
-          };
-        };
+      packages.${system}.ALL_SCREENSHOTS = pkgs.runCommand "all-screenshots" {} ''
+        ${lib.concatStringsSep "\n" (lib.mapAttrsToList (name: drv: ''
+          mkdir -p $out/${name}
+          cp ${drv}/*.png $out/${name}/
+        '') approvalTests)}
+      '';
 
-        testScript = ''
-          machine.wait_for_unit("multi-user.target")
-
-          with subtest("hostname is AITO"):
-              result = machine.succeed("hostname")
-              assert "AITO" in result, f"Expected hostname AITO, got {result}"
-
-          with subtest("timezone is UTC"):
-              result = machine.succeed("timedatectl show --property=Timezone --value")
-              assert "UTC" in result, f"Expected UTC, got {result}"
-
-          with subtest("user username exists"):
-              machine.succeed("id username")
-
-          with subtest("user username is in wheel group"):
-              result = machine.succeed("groups username")
-              assert "wheel" in result, f"Expected wheel group, got {result}"
-
-          with subtest("flakes are enabled"):
-              machine.succeed("nix --version")
-              result = machine.succeed("nix show-config | grep experimental-features")
-              assert "flakes" in result, f"Flakes not enabled: {result}"
-        '';
+      devShells.${system}.default = pkgs.mkShell {
+        inherit (preCommitCheck) shellHook;
       };
     };
 }
