@@ -10,12 +10,12 @@
 # Uses filesystem labels so the system boots regardless of device naming
 # (e.g., install on /dev/vdb, boot from /dev/vda)
 
-{
+{ lib, ... }: {
   disko.devices = {
     disk = {
       main = {
         type = "disk";
-        device = "/dev/vda";
+        device = lib.mkDefault "/dev/vda";
         content = {
           type = "gpt";
           partitions = {
