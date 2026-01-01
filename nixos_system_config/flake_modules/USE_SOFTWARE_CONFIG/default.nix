@@ -23,15 +23,17 @@
   };
 
   system.activationScripts.initHomeGit = ''
+    set -x
     if [ ! -d /home/username/.git ]; then
       mkdir -p /home/username
       ${pkgs.git}/bin/git init /home/username
       ${pkgs.git}/bin/git -C /home/username config user.email "user@aito"
       ${pkgs.git}/bin/git -C /home/username config user.name "User"
-      ${pkgs.git}/bin/git -C /home/username config --global --add safe.directory /home/username
-      ${pkgs.git}/bin/git -C /home/username commit --allow-empty -m "init"
+      ${pkgs.git}/bin/git config --global --add safe.directory /home/username
+      HOME=/root ${pkgs.git}/bin/git -C /home/username commit --allow-empty -m "init" || echo "commit failed with $?"
       chown -R username:users /home/username
     fi
+    set +x
   '';
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
