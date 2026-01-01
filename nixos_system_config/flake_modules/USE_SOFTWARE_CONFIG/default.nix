@@ -26,10 +26,12 @@
     if [ ! -d /home/username/.git ]; then
       mkdir -p /home/username
       chown -R username:users /home/username
-      ${pkgs.sudo}/bin/sudo -u username ${pkgs.git}/bin/git init /home/username
-      ${pkgs.sudo}/bin/sudo -u username ${pkgs.git}/bin/git -C /home/username config user.email "user@aito"
-      ${pkgs.sudo}/bin/sudo -u username ${pkgs.git}/bin/git -C /home/username config user.name "User"
-      ${pkgs.sudo}/bin/sudo -u username ${pkgs.git}/bin/git -C /home/username commit --allow-empty -m "init"
+      ${pkgs.shadow}/bin/su username -s /bin/sh -c '
+        ${pkgs.git}/bin/git init /home/username
+        ${pkgs.git}/bin/git -C /home/username config user.email "user@aito"
+        ${pkgs.git}/bin/git -C /home/username config user.name "User"
+        ${pkgs.git}/bin/git -C /home/username commit --allow-empty -m "init"
+      '
     fi
   '';
 
