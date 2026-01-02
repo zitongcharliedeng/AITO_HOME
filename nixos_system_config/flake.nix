@@ -81,6 +81,15 @@
           };
         };
       };
+      installerModules = [
+        ./flake_modules/USE_INSTALLER_ISO
+      ];
+
+      installerSystem = lib.nixosSystem {
+        inherit system;
+        modules = installerModules;
+        specialArgs = { inherit disko; self = ./.; };
+      };
     in
     {
       nixosConfigurations = lib.mapAttrs (name: modules:
@@ -88,16 +97,21 @@
           inherit system modules;
           specialArgs = { inherit nixos-hardware; };
         }
-      ) systemModules;
+      ) systemModules // {
+        INSTALLER = installerSystem;
+      };
 
       checks.${system} = approvalTests;
 
-      packages.${system}.ALL_SCREENSHOTS = pkgs.runCommand "all-screenshots" {} ''
-        ${lib.concatStringsSep "\n" (lib.mapAttrsToList (name: drv: ''
-          mkdir -p $out/${name}
-          cp ${drv}/*.png $out/${name}/
-        '') approvalTests)}
-      '';
+      packages.${system} = {
+        ALL_SCREENSHOTS = pkgs.runCommand "all-screenshots" {} ''
+          ${lib.concatStringsSep "\n" (lib.mapAttrsToList (name: drv: ''
+            mkdir -p $out/${name}
+            cp ${drv}/*.png $out/${name}/
+          '') approvalTests)}
+        '';
+        installer-iso = installerSystem.config.system.build.isoImage;
+      };
 
       devShells.${system}.default = pkgs.mkShell {
         inherit (preCommitCheck) shellHook;
