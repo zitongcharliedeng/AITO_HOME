@@ -48,7 +48,7 @@
       approvalTestDirs = lib.filterAttrs (_: type: type == "directory") (builtins.readDir ./approval_tests);
 
       approvalTests = lib.mapAttrs (name: _:
-        import ./approval_tests/${name} { inherit pkgs systemModules impermanence self disko; }
+        import ./approval_tests/${name} { inherit pkgs systemModules impermanence self disko installerSystem; }
       ) approvalTestDirs;
 
       noCommentsInNixFilesScript = pkgs.writeShellScript "no-comments-in-nix-files" ''
@@ -82,7 +82,7 @@
         };
       };
       installerModules = [
-        ./flake_modules/USE_INSTALLER_ISO
+        ./INSTALLER_ISO
       ];
 
       installerSystem = lib.nixosSystem {

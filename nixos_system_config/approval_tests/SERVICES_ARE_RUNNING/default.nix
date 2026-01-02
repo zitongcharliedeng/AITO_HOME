@@ -1,4 +1,4 @@
-{ pkgs, systemModules, impermanence, self, disko }:
+{ pkgs, systemModules, impermanence, self, disko, installerSystem }:
 
 pkgs.testers.runNixOSTest {
   name = "SERVICES_ARE_RUNNING";

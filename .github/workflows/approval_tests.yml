@@ -26,7 +26,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/determinate-nix-action@v3
       - name: Verify configuration builds
-        run: nix build ./nixos_system_config#checks.x86_64-linux.SYSTEM_INSTALLS_FROM_ONE_SCRIPT -L
+        run: nix build ./nixos_system_config#checks.x86_64-linux.FIRST_TIME_INSTALL_USING_ISO -L
 
   property-tests:
     runs-on: ubuntu-latest
