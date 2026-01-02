@@ -9,12 +9,6 @@
 
   disko.devices = lib.mkForce {};
 
-  fileSystems."/" = lib.mkForce {
-    device = "tmpfs";
-    fsType = "tmpfs";
-    options = [ "mode=0755" "size=2G" ];
-  };
-
   fileSystems."/persist" = {
     device = "/dev/vdb";
     fsType = "ext4";
