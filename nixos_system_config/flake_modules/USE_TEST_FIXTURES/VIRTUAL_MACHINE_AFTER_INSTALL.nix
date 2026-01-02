@@ -1,4 +1,4 @@
-{ lib, modulesPath, ... }:
+{ lib, pkgs, modulesPath, ... }:
 
 {
   imports = [ (modulesPath + "/profiles/qemu-guest.nix") ];
@@ -9,11 +9,17 @@
 
   disko.devices = lib.mkForce {};
 
+  # Format the empty disk on first boot before mounting
+  boot.initrd.postDeviceCommands = lib.mkBefore ''
+    if ! blkid /dev/vdb | grep -q ext4; then
+      ${pkgs.e2fsprogs}/bin/mkfs.ext4 -L persist /dev/vdb
+    fi
+  '';
+
   fileSystems."/persist" = {
-    device = "/dev/vdb";
+    device = "/dev/disk/by-label/persist";
     fsType = "ext4";
     neededForBoot = true;
-    autoFormat = true;
   };
 
   boot.loader.grub.enable = false;
