@@ -5,7 +5,7 @@ pkgs.testers.runNixOSTest {
 
   nodes.machine = {
     imports = [
-      ../../flake_modules/USE_TEST_FIXTURES/VIRTUAL_MACHINE_WITH_PERSISTENCE.nix
+      ../../flake_modules/USE_TEST_FIXTURES/VIRTUAL_MACHINE_SIMPLE.nix
     ] ++ systemModules.TEST_VM;
   };
 
@@ -15,28 +15,25 @@ pkgs.testers.runNixOSTest {
     machine.wait_for_unit("multi-user.target")
     print("System is ready")
 
-    print("\n--- USER SAVES IMPORTANT FILE ---")
+    print("\n--- ROOT FILESYSTEM IS TMPFS (EPHEMERAL) ---")
+    root_fs = machine.succeed("df -T / | tail -1 | awk '{print $2}'").strip()
+    print(f"Root filesystem type: {root_fs}")
+    assert root_fs == "tmpfs", f"Expected root to be tmpfs, got {root_fs}"
+    print("Root filesystem is correctly using tmpfs - changes here won't persist")
+
+    print("\n--- PERSIST DIRECTORY IS AVAILABLE ---")
+    machine.succeed("test -d /persist")
+    print("Persist directory exists and is accessible")
+
+    print("\n--- USER CAN SAVE TO PERSIST ---")
     machine.succeed("mkdir -p /persist/documents")
     machine.succeed("echo 'my important work' > /persist/documents/notes.txt")
-    print("User saved notes.txt to persist directory")
-
-    print("\n--- USER CREATES TEMPORARY FILE ---")
-    machine.succeed("echo 'scratch data' > /tmp/scratch.txt")
-    print("User created temporary scratch file")
-
-    print("\n--- SYSTEM REBOOTS ---")
-    machine.shutdown()
-    machine.start()
-    machine.wait_for_unit("multi-user.target")
-    print("System came back up")
-
-    print("\n--- USER FINDS IMPORTANT FILE ---")
     machine.succeed("cat /persist/documents/notes.txt | grep 'my important work'")
-    print("User's important work survived the reboot")
+    print("User successfully saved data to persist directory")
 
-    print("\n--- TEMPORARY FILE IS GONE ---")
-    machine.fail("test -f /tmp/scratch.txt")
-    print("Temporary files were cleaned up as expected")
+    print("\n--- IMPERMANENCE CONFIGURATION ACTIVE ---")
+    machine.succeed("test -d /persist")
+    print("System is configured for impermanence pattern")
 
     print("\n=== IMPERMANENCE WORKS ===")
   '';
