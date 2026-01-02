@@ -1,4 +1,4 @@
-{ lib, pkgs, modulesPath, ... }:
+{ lib, modulesPath, ... }:
 
 {
   imports = [ (modulesPath + "/profiles/qemu-guest.nix") ];
@@ -7,20 +7,13 @@
   virtualisation.cores = 2;
   virtualisation.writableStore = true;
 
-  virtualisation.emptyDiskImages = [ 512 ];
-
-  boot.initrd.postDeviceCommands = lib.mkBefore ''
-    if ! blkid /dev/vdb | grep -q ext4; then
-      ${pkgs.e2fsprogs}/bin/mkfs.ext4 -L persist /dev/vdb
-    fi
-  '';
-
-  fileSystems."/persist" = {
-    device = "/dev/disk/by-label/persist";
-    fsType = "ext4";
-    neededForBoot = true;
-  };
-
   disko.devices = lib.mkForce {};
   boot.loader.grub.enable = false;
+
+  fileSystems."/persist" = lib.mkForce {
+    device = "tmpfs";
+    fsType = "tmpfs";
+    options = [ "defaults" "size=256M" "mode=755" ];
+    neededForBoot = true;
+  };
 }
