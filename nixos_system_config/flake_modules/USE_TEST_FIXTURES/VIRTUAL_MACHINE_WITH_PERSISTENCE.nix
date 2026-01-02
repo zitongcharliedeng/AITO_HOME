@@ -10,10 +10,12 @@
   disko.devices = lib.mkForce {};
   boot.loader.grub.enable = false;
 
-  fileSystems."/persist" = lib.mkForce {
+  fileSystems."/persist" = lib.mkVMOverride {
     device = "tmpfs";
     fsType = "tmpfs";
     options = [ "defaults" "size=256M" "mode=755" ];
     neededForBoot = true;
   };
+
+  environment.persistence = lib.mkForce {};
 }
