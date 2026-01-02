@@ -7,18 +7,21 @@
   virtualisation.cores = 2;
   virtualisation.writableStore = true;
 
-  disko.devices = lib.mkForce {};
+  virtualisation.emptyDiskImages = [ 512 ];
 
-  fileSystems = lib.mkForce {
-    "/" = {
-      device = "tmpfs";
-      fsType = "tmpfs";
-      options = [ "mode=0755" "size=2G" ];
-    };
-    "/nix" = {
-      device = "/dev/vda";
-      fsType = "ext4";
-      neededForBoot = true;
-    };
+  fileSystems."/" = lib.mkForce {
+    device = "tmpfs";
+    fsType = "tmpfs";
+    options = [ "mode=0755" "size=2G" ];
   };
+
+  fileSystems."/persist" = {
+    device = "/dev/vdb";
+    fsType = "ext4";
+    neededForBoot = true;
+    autoFormat = true;
+  };
+
+  disko.devices = lib.mkForce {};
+  boot.loader.grub.enable = false;
 }
