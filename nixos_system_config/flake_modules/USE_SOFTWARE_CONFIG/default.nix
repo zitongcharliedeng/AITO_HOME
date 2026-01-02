@@ -3,6 +3,8 @@
 {
   imports = [
     ./default_modules/USE_DESKTOP_ENVIRONMENT
+    ./default_modules/USE_DIGITAL_ASSISTANT
+    ./default_modules/USE_WEB_FRONTEND
   ];
 
   boot.loader.systemd-boot.enable = true;

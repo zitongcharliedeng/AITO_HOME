@@ -34,8 +34,9 @@ jobs:
     strategy:
       matrix:
         test:
-          - SERVICES_ARE_RUNNING
           - IMPERMANENCE_WORKS
+          - DIGITAL_ASSISTANT_IS_ACCESSIBLE
+          - WEB_FRONTEND_IS_RUNNING
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/determinate-nix-action@v3
