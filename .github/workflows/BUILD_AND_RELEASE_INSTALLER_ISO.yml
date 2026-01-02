@@ -2,8 +2,9 @@ name: BUILD_AND_RELEASE_INSTALLER_ISO
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   build-iso:
@@ -26,10 +27,11 @@ jobs:
         run: |
           cd nixos_system_config
           nix build .#installer-iso --out-link result
-          cp result/iso/*.iso aito-installer-${{ github.ref_name }}.iso
+          cp result/iso/*.iso ../AITO_HOME_INSTALLER.iso
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload ISO artifact
+        uses: actions/upload-artifact@v4
         with:
-          files: nixos_system_config/aito-installer-${{ github.ref_name }}.iso
-          generate_release_notes: true
+          name: AITO_HOME_INSTALLER
+          path: AITO_HOME_INSTALLER.iso
+          retention-days: 90
