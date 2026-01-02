@@ -5,6 +5,7 @@
 
   virtualisation.memorySize = 2048;
   virtualisation.cores = 2;
+  virtualisation.diskImage = null;
 
   disko.devices = lib.mkForce {};
   boot.loader.grub.enable = false;
