@@ -26,21 +26,21 @@ pkgs.runCommand "FIRST_TIME_INSTALL_USING_ISO" {
       -boot d
 
     expect {
-      "automatic login" {
+      -re {\[nixos@nixos:~\]\$} {
         puts "System booted - user auto-logged in"
       }
       timeout {
-        puts "FAIL: System did not boot"
+        puts "FAIL: System did not boot to shell prompt"
         exit 1
       }
     }
 
-    expect "\$"
+    sleep 1
 
     puts "\n--- USER IS IN HOME DIRECTORY ---"
     send "pwd\r"
     expect {
-      "/home/nixos" { puts "User starts in home directory" }
+      -re {/home/nixos.*\[nixos@nixos} { puts "User starts in home directory" }
       timeout {
         puts "FAIL: User not in home directory"
         exit 1
@@ -50,7 +50,7 @@ pkgs.runCommand "FIRST_TIME_INSTALL_USING_ISO" {
     puts "\n--- USER SEES INSTALL SCRIPT ---"
     send "ls\r"
     expect {
-      "INSTALL_SYSTEM" { puts "Install script is visible" }
+      -re {INSTALL_SYSTEM.*\[nixos@nixos} { puts "Install script is visible" }
       timeout {
         puts "FAIL: Install script not visible"
         exit 1
