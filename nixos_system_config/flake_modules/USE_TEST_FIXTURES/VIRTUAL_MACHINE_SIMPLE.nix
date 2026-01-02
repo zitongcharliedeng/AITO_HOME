@@ -5,17 +5,14 @@
 
   virtualisation.memorySize = 2048;
   virtualisation.cores = 2;
-  virtualisation.writableStore = true;
-  virtualisation.diskImage = null;
-  virtualisation.emptyDiskImages = [ 256 ];
 
   disko.devices = lib.mkForce {};
   boot.loader.grub.enable = false;
 
   fileSystems."/persist" = lib.mkVMOverride {
-    device = "/dev/vdb";
-    fsType = "ext4";
-    autoFormat = true;
+    device = "tmpfs";
+    fsType = "tmpfs";
+    options = [ "defaults" "size=256M" "mode=755" ];
     neededForBoot = true;
   };
 
