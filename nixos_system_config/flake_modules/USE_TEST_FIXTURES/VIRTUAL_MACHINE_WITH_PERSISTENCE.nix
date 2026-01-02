@@ -9,7 +9,6 @@
 
   virtualisation.emptyDiskImages = [ 512 ];
 
-  # Format the empty disk on first boot before mounting
   boot.initrd.postDeviceCommands = lib.mkBefore ''
     if ! blkid /dev/vdb | grep -q ext4; then
       ${pkgs.e2fsprogs}/bin/mkfs.ext4 -L persist /dev/vdb
