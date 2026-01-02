@@ -3,12 +3,12 @@ name: BUILD_AND_RELEASE_INSTALLER_ISO
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
 
 jobs:
   build-iso:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -29,9 +29,10 @@ jobs:
           nix build .#installer-iso --out-link result
           cp result/iso/*.iso ../AITO_HOME_INSTALLER.iso
 
-      - name: Upload ISO artifact
-        uses: actions/upload-artifact@v4
+      - name: Create release
+        uses: softprops/action-gh-release@v2
         with:
-          name: AITO_HOME_INSTALLER
-          path: AITO_HOME_INSTALLER.iso
-          retention-days: 90
+          tag_name: ${{ github.sha }}
+          name: ${{ github.sha }}
+          files: AITO_HOME_INSTALLER.iso
+          make_latest: true
