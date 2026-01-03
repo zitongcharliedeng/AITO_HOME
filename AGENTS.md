@@ -165,20 +165,13 @@ This automatically:
 
 ## First Time Setup
 
-1. Download the NixOS minimal installer ISO (no GUI needed)
+1. Download the AITO_HOME installer ISO from GitHub Releases
 2. Boot from the ISO
-3. Partition disk, mount at /mnt
-4. Run:
-   ```
-   nix-shell -p git
-   git clone https://github.com/zitongcharliedeng/AITO_HOME.git /mnt/home/username
-   cd /mnt/home/username/nixos_system_config
-   ./BUILD_NIXOS_FROM_FLAKE_FOR_MACHINE_.sh MY_NEW_MACHINE
-   ```
-5. Reboot
-6. Login with `username` / `password` - your home directory IS the git repo
+3. Run: `./INSTALL_SYSTEM.sh MACHINE_NAME` (available machines are listed)
+4. Reboot
+5. Login with `username` / `password` - your home directory IS the git repo
 
-The script auto-generates `MY_NEW_MACHINE.nix` with your hardware config. Machine names must be SCREAMING_SNAKE_CASE.
+The installer ISO includes prebuilt system closures for all machines. No network required. The install is a pure offline operation from the ISO's nix store.
 
 ---
 
