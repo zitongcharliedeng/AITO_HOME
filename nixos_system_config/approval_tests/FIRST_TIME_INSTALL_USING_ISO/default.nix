@@ -59,13 +59,32 @@ pkgs.runCommand "FIRST_TIME_INSTALL_USING_ISO" {
     }
     expect ":~\]"
 
-    puts "\n--- USER RUNS INSTALL SCRIPT ---"
+    puts "\n--- USER RUNS INSTALL SCRIPT WITHOUT ARGS ---"
     send "sudo ./INSTALL_SYSTEM.sh\r"
     expect {
       "Available machines" { puts "Script shows available machines" }
       "Usage:" { puts "Script shows usage instructions" }
       timeout {
         puts "FAIL: Script did not show help"
+        exit 1
+      }
+    }
+    expect ":~\]"
+
+    puts "\n--- USER RUNS INSTALL SCRIPT WITH MACHINE NAME ---"
+    send "sudo ./INSTALL_SYSTEM.sh GPD_POCKET_4\r"
+    expect {
+      "Running disko to partition disk" { puts "Script starts disko - flake source is embedded correctly" }
+      "Cloning" {
+        puts "FAIL: Script tried to clone from GitHub instead of using embedded flake"
+        exit 1
+      }
+      "Could not resolve host" {
+        puts "FAIL: Script tried to access network"
+        exit 1
+      }
+      timeout {
+        puts "FAIL: Script did not start installation"
         exit 1
       }
     }

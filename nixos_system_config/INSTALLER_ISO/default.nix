@@ -1,4 +1,4 @@
-{ pkgs, lib, modulesPath, disko, ... }:
+{ pkgs, lib, modulesPath, disko, self, ... }:
 
 let
   availableMachineNames = lib.pipe (builtins.readDir ../flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_) [
@@ -8,7 +8,7 @@ let
     (lib.filter (n: n != "TEST_VM"))
   ];
 
-  machineList = lib.concatMapStringsSep "\n" (name: "  - ${name}") availableMachineNames;
+  flakeSource = self;
 
   installScript = pkgs.writeShellScriptBin "INSTALL_SYSTEM" ''
     set -euo pipefail
@@ -37,20 +37,13 @@ let
     echo "Installing $MACHINE..."
     echo ""
 
-    REPO_DIR="/tmp/AITO_HOME"
-
-    if [[ ! -d "$REPO_DIR" ]]; then
-      echo "Cloning configuration from GitHub..."
-      git clone https://github.com/zitongcharliedeng/AITO_HOME.git "$REPO_DIR"
-    fi
-
-    cd "$REPO_DIR/nixos_system_config"
+    FLAKE_DIR="${flakeSource}"
 
     echo "Running disko to partition disk..."
-    nix --extra-experimental-features 'nix-command flakes' run .#disko -- --mode disko --flake ".#$MACHINE"
+    nix --extra-experimental-features 'nix-command flakes' run path:$FLAKE_DIR#disko -- --mode disko --flake "path:$FLAKE_DIR#$MACHINE"
 
     echo "Installing NixOS..."
-    nixos-install --flake ".#$MACHINE" --no-root-passwd
+    nixos-install --flake "path:$FLAKE_DIR#$MACHINE" --no-root-passwd
 
     echo ""
     echo "=== Installation complete! ==="
@@ -67,7 +60,6 @@ in
     pkgs.parted
     pkgs.dosfstools
     pkgs.e2fsprogs
-    pkgs.git
     installScript
   ];
 
