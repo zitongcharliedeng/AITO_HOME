@@ -34,6 +34,22 @@ let
 
     MACHINE="$1"
 
+    echo "Checking network connectivity..."
+    if ! ping -c 1 -W 5 cache.nixos.org &>/dev/null; then
+      echo ""
+      echo "No internet connection detected."
+      echo "Internet is required to download NixOS packages."
+      echo ""
+      echo "Connect via:"
+      echo "  - Ethernet: Should auto-connect"
+      echo "  - WiFi: Run 'nmtui' to connect"
+      echo ""
+      echo "Then run this script again."
+      exit 1
+    fi
+    echo "Network OK"
+    echo ""
+
     echo "Installing $MACHINE..."
     echo ""
 
@@ -55,6 +71,9 @@ in
     (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix")
     disko.nixosModules.disko
   ];
+
+  networking.networkmanager.enable = true;
+  networking.wireless.enable = lib.mkForce false;
 
   environment.systemPackages = [
     pkgs.parted
