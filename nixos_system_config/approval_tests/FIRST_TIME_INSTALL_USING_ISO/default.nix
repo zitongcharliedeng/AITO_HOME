@@ -5,7 +5,6 @@ let
 in
 pkgs.runCommand "FIRST_TIME_INSTALL_USING_ISO" {
   nativeBuildInputs = [ pkgs.qemu pkgs.expect ];
-  __network = true;
 } ''
   mkdir -p $out
   qemu-img create -f qcow2 disk.qcow2 20G
@@ -17,14 +16,14 @@ pkgs.runCommand "FIRST_TIME_INSTALL_USING_ISO" {
     set iso_file $env(ISO_FILE)
 
     puts "\n--- USER BOOTS FROM ISO ---"
-    puts "Using GENERIC_LINUX_PC fixture"
+    puts "Testing OFFLINE install (no network required)"
     spawn qemu-system-x86_64 \
       -m 4096 \
       -smp 2 \
       -nographic \
       -cdrom $iso_file \
-      -drive file=disk.qcow2,format=qcow2 \
-      -nic user,model=virtio-net-pci \
+      -drive file=disk.qcow2,format=qcow2,if=virtio \
+      -nic none \
       -boot d
 
     expect {
@@ -75,49 +74,30 @@ pkgs.runCommand "FIRST_TIME_INSTALL_USING_ISO" {
 
     puts "\n--- USER RUNS INSTALL SCRIPT WITH MACHINE NAME ---"
     send "sudo ./INSTALL_SYSTEM.sh TEST_VM\r"
+
+    puts "\n--- DISKO STARTS ---"
     expect {
-      "Network OK" {
-        puts "Install script verified network connectivity"
-        puts "Continuing with full installation test..."
-
-        puts "\n--- DISKO STARTS ---"
-        expect {
-          "Running disko to partition disk" { puts "Disko starting" }
-          timeout {
-            puts "FAIL: Disko did not start"
-            exit 1
-          }
-        }
-
-        puts "\n--- DISKO PARTITIONS DISK ---"
-        expect {
-          "Installing NixOS" { puts "Disko completed successfully, nixos-install starting" }
-          timeout {
-            puts "FAIL: Disko did not complete"
-            exit 1
-          }
-        }
-
-        puts "\n--- NIXOS-INSTALL DOWNLOADS AND INSTALLS SYSTEM ---"
-        expect {
-          "Installation complete" { puts "NixOS installation finished successfully" }
-          timeout {
-            puts "FAIL: nixos-install did not complete"
-            exit 1
-          }
-        }
-      }
-      "No internet connection detected" {
-        puts "Script correctly detected no network and showed user instructions"
-        puts "NOTE: Full install test skipped - no network in sandbox"
-        puts "User would see: connect via Ethernet or run nmtui for WiFi"
-      }
-      "Cloning" {
-        puts "FAIL: Script tried to clone from GitHub instead of using embedded flake"
+      "Running disko to partition disk" { puts "Disko starting" }
+      timeout {
+        puts "FAIL: Disko did not start"
         exit 1
       }
+    }
+
+    puts "\n--- DISKO PARTITIONS DISK ---"
+    expect {
+      "Installing NixOS" { puts "Disko completed, nixos-install starting" }
       timeout {
-        puts "FAIL: Script did not start or check network"
+        puts "FAIL: Disko did not complete"
+        exit 1
+      }
+    }
+
+    puts "\n--- NIXOS-INSTALL INSTALLS SYSTEM FROM PREBUILT CLOSURE ---"
+    expect {
+      "Installation complete" { puts "NixOS installation finished successfully" }
+      timeout {
+        puts "FAIL: nixos-install did not complete"
         exit 1
       }
     }

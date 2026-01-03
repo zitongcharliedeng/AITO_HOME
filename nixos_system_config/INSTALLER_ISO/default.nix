@@ -1,14 +1,21 @@
-{ pkgs, lib, modulesPath, disko, self, ... }:
+{ pkgs, lib, modulesPath, disko, self, nixosConfigurations, ... }:
 
 let
-  availableMachineNames = lib.pipe (builtins.readDir ../flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_) [
+  allMachineNames = lib.pipe (builtins.readDir ../flake_modules/USE_HARDWARE_CONFIG_FOR_MACHINE_) [
     (lib.filterAttrs (n: _: lib.hasSuffix ".nix" n))
     builtins.attrNames
     (map (lib.removeSuffix ".nix"))
-    (lib.filter (n: n != "TEST_VM"))
   ];
 
-  flakeSource = self;
+  displayMachineNames = lib.filter (n: n != "TEST_VM") allMachineNames;
+
+  machineDiskoScripts = lib.genAttrs allMachineNames (name:
+    nixosConfigurations.${name}.config.system.build.diskoScript
+  );
+
+  machineToplevels = lib.genAttrs allMachineNames (name:
+    nixosConfigurations.${name}.config.system.build.toplevel
+  );
 
   installScript = pkgs.writeShellScriptBin "INSTALL_SYSTEM" ''
     set -euo pipefail
@@ -22,44 +29,39 @@ let
     fi
 
     echo "Available machines:"
-    ${lib.concatMapStringsSep "\n" (name: "echo \"  - ${name}\"") availableMachineNames}
+    ${lib.concatMapStringsSep "\n" (name: "echo \"  - ${name}\"") displayMachineNames}
     echo ""
 
     if [[ $# -lt 1 ]]; then
       echo "Usage: INSTALL_SYSTEM MACHINE_NAME"
       echo ""
-      echo "Example: INSTALL_SYSTEM GPD_POCKET_4"
+      echo "Example: INSTALL_SYSTEM ${lib.head displayMachineNames}"
       exit 1
     fi
 
     MACHINE="$1"
 
-    echo "Checking network connectivity..."
-    if ! ping -c 1 -W 5 cache.nixos.org &>/dev/null; then
-      echo ""
-      echo "No internet connection detected."
-      echo "Internet is required to download NixOS packages."
-      echo ""
-      echo "Connect via:"
-      echo "  - Ethernet: Should auto-connect"
-      echo "  - WiFi: Run 'nmtui' to connect"
-      echo ""
-      echo "Then run this script again."
-      exit 1
-    fi
-    echo "Network OK"
-    echo ""
+    case "$MACHINE" in
+      ${lib.concatMapStringsSep "\n" (name: ''
+        ${name})
+          DISKO_SCRIPT="${machineDiskoScripts.${name}}"
+          SYSTEM_TOPLEVEL="${machineToplevels.${name}}"
+          ;;'') allMachineNames}
+      *)
+        echo "ERROR: Unknown machine '$MACHINE'"
+        echo "Available: ${lib.concatStringsSep ", " displayMachineNames}"
+        exit 1
+        ;;
+    esac
 
     echo "Installing $MACHINE..."
     echo ""
 
-    FLAKE_DIR="${flakeSource}"
-
     echo "Running disko to partition disk..."
-    nix --extra-experimental-features 'nix-command flakes' run path:$FLAKE_DIR#disko -- --mode disko --flake "path:$FLAKE_DIR#$MACHINE"
+    $DISKO_SCRIPT
 
     echo "Installing NixOS..."
-    nixos-install --flake "path:$FLAKE_DIR#$MACHINE" --no-root-passwd
+    nixos-install --system "$SYSTEM_TOPLEVEL" --no-root-passwd
 
     echo ""
     echo "=== Installation complete! ==="
@@ -101,7 +103,7 @@ in
     Run: ./INSTALL_SYSTEM.sh MACHINE_NAME
 
     Available machines:
-${lib.concatMapStringsSep "\n" (name: "      - ${name}") availableMachineNames}
+${lib.concatMapStringsSep "\n" (name: "      - ${name}") displayMachineNames}
 
   '';
 }

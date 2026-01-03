@@ -6,5 +6,5 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  disko.devices.disk.main.device = "/dev/vdb";
+  disko.devices.disk.main.device = "/dev/vda";
 }

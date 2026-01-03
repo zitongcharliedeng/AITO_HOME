@@ -81,23 +81,25 @@
           };
         };
       };
-      installerModules = [
-        ./INSTALLER_ISO
-      ];
-
-      installerSystem = lib.nixosSystem {
-        inherit system;
-        modules = installerModules;
-        specialArgs = { inherit disko; self = ./.; };
-      };
-    in
-    {
-      nixosConfigurations = lib.mapAttrs (name: modules:
+      machineConfigs = lib.mapAttrs (name: modules:
         lib.nixosSystem {
           inherit system modules;
           specialArgs = { inherit nixos-hardware; };
         }
-      ) systemModules // {
+      ) systemModules;
+
+      installerSystem = lib.nixosSystem {
+        inherit system;
+        modules = [ ./INSTALLER_ISO ];
+        specialArgs = {
+          inherit disko;
+          self = ./.;
+          nixosConfigurations = machineConfigs;
+        };
+      };
+    in
+    {
+      nixosConfigurations = machineConfigs // {
         INSTALLER = installerSystem;
       };
 
