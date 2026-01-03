@@ -37,14 +37,14 @@ let
     echo "Installing $MACHINE..."
     echo ""
 
-    REPO_DIR="/tmp/nixos_system_config"
+    REPO_DIR="/tmp/AITO_HOME"
 
     if [[ ! -d "$REPO_DIR" ]]; then
       echo "Cloning configuration from GitHub..."
-      git clone https://github.com/USER/nixos_system_config "$REPO_DIR"
+      git clone https://github.com/zitongcharliedeng/AITO_HOME.git "$REPO_DIR"
     fi
 
-    cd "$REPO_DIR"
+    cd "$REPO_DIR/nixos_system_config"
 
     echo "Running disko to partition disk..."
     nix --extra-experimental-features 'nix-command flakes' run .#disko -- --mode disko --flake ".#$MACHINE"
