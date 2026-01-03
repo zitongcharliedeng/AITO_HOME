@@ -72,7 +72,7 @@ pkgs.runCommand "FIRST_TIME_INSTALL_USING_ISO" {
     expect ":~\]"
 
     puts "\n--- USER RUNS INSTALL SCRIPT WITH MACHINE NAME ---"
-    send "sudo ./INSTALL_SYSTEM.sh GPD_POCKET_4\r"
+    send "sudo ./INSTALL_SYSTEM.sh TEST_VM\r"
     expect {
       "Running disko to partition disk" { puts "Script starts disko - flake source is embedded correctly" }
       "Cloning" {
